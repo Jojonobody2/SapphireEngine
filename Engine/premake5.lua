@@ -2,7 +2,7 @@ project "Engine"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++17"
-	staticruntime "off"
+	staticruntime "Off"
 
 	targetdir("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
 	objdir("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
@@ -17,11 +17,21 @@ project "Engine"
 	{
 		"_CRT_SECURE_NO_WARNINGS"
 	}
+	
+	links
+	{
+		"GLFW"
+	}
 
 	includedirs
 	{
-		"src"
+		"src",
+		"vendor/GLFW/include"
 	}
+
+	filter "system:linux"
+		pic "On"
+		systemversion "latest"
 
 	filter "system:windows"
 		systemversion "latest"
@@ -29,9 +39,9 @@ project "Engine"
 	filter "configurations:Debug"
 		defines "SAPPHIRE_DEBUG"
 		runtime "Debug"
-		symbols "on"
+		symbols "On"
 
 	filter "configurations:Release"
 		defines "SAPPHIRE_RELEASE"
 		runtime "Debug"
-		optimize "on"
+		optimize "On"

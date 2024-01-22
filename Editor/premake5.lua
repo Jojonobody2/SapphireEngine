@@ -1,5 +1,5 @@
 project "Editor"
-	kind "ConsoleApp"
+	kind "WindowedApp"
 	language "C++"
 	cppdialect "C++17"
 	staticruntime "off"
@@ -22,6 +22,11 @@ project "Editor"
 	{
 		"Engine"
 	}
+	
+	filter "system:linux"
+		pic "On"
+		systemversion "latest"
+		links "GLFW"
 
 	filter "system:windows"
 		systemversion "latest"
@@ -29,9 +34,9 @@ project "Editor"
 	filter "configurations:Debug"
 		defines "SAPPHIRE_DEBUG"
 		runtime "Debug"
-		symbols "on"
+		symbols "On"
 
 	filter "configurations:Release"
 		defines "SAPPHIRE_RELEASE"
 		runtime "Debug"
-		optimize "on"
+		optimize "On"

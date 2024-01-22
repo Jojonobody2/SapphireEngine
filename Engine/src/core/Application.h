@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Window.h"
+
 namespace Sapphire
 {
 	struct ApplicationCreateInfo
@@ -18,5 +20,7 @@ namespace Sapphire
 
 	private:
 		bool m_IsRunning{};
+		
+		std::shared_ptr<Window> m_Window{};
 	};
 }

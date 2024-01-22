@@ -8,3 +8,13 @@ bin-int/
 **.vcxproj
 **.vcxproj.filters
 **.vcxproj.user
+
+# Codelite Files
+.codelite/
+.build-debug/
+.build-release/
+Makefile
+**.workspace
+**.project
+**.mk
+**.txt
