@@ -1,7 +1,5 @@
 #include "GLFWWindow.h"
 
-#include <iostream>
-
 namespace Sapphire
 {
 	GlfwWindow::GlfwWindow(const WindowCreateInfo& WindowCI)
@@ -13,8 +11,12 @@ namespace Sapphire
 		
 		m_Window = glfwCreateWindow(WindowCI.Width, WindowCI.Height, WindowCI.Title, nullptr, nullptr);
 		
+		glfwSetWindowUserPointer(m_Window, this);
+
 		const GLFWvidmode* VidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 		glfwSetWindowPos(m_Window, (VidMode->width - WindowCI.Width) / 2, (VidMode->height - WindowCI.Height) / 2);
+
+		glfwSetWindowCloseCallback(m_Window, WindowCloseCallback);
 	}
 	
 	GlfwWindow::~GlfwWindow()
@@ -52,5 +54,11 @@ namespace Sapphire
 		glfwGetWindowSize(m_Window, nullptr, &pHeight);
 		
 		return pHeight;
+	}
+
+	void GlfwWindow::WindowCloseCallback(GLFWwindow* Window)
+	{
+		GlfwWindow* pWindow = (GlfwWindow*)glfwGetWindowUserPointer(Window);
+		pWindow->OnClose();
 	}
 }

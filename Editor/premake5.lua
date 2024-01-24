@@ -9,13 +9,13 @@ project "Editor"
 
 	files
 	{
-		"src/**.h",
-		"src/**.cpp"
+		"Source/**.h",
+		"Source/**.cpp"
 	}
 
 	includedirs
 	{
-		"%{wks.location}/Engine/src"
+		"%{wks.location}/Engine/Source"
 	}
 
 	links
@@ -27,9 +27,11 @@ project "Editor"
 		pic "On"
 		systemversion "latest"
 		links "GLFW"
+		defines "SAPPHIRE_LINUX"
 
 	filter "system:windows"
 		systemversion "latest"
+		defines "SAPPHIRE_WINDOWS"
 	
 	filter "configurations:Debug"
 		defines "SAPPHIRE_DEBUG"

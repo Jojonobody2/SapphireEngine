@@ -4,8 +4,12 @@
 
 namespace Sapphire
 {
+	Application* Application::s_Application = nullptr;
+
 	Application::Application(const ApplicationCreateInfo& ApplicationCI)
 	{
+		s_Application = this;
+
 		WindowCreateInfo WindowCI{};
 		WindowCI.Title = ApplicationCI.Name;
 		WindowCI.Width = 1280;
@@ -23,16 +27,14 @@ namespace Sapphire
 
 	void Application::Run()
 	{
-		while (m_Window->IsOpen())
+		while (m_IsRunning)
 		{
 			m_Window->Update();
 		}
-		
-		m_IsRunning = false;
 	}
 
 	void Application::Close()
 	{
-		m_Window->Close();
+		m_IsRunning = false;
 	}
 }

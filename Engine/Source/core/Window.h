@@ -25,5 +25,8 @@ namespace Sapphire
 		virtual uint32_t GetHeight() const = 0;
 		
 		static std::shared_ptr<Window> Create(const WindowCreateInfo& WindowCI);
+
+	protected:
+		void OnClose();
 	};
 }

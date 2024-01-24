@@ -18,9 +18,14 @@ namespace Sapphire
 		void Run();
 		void Close();
 
+		static Application& Get() { return *s_Application; }
+
 	private:
 		bool m_IsRunning{};
 		
 		std::shared_ptr<Window> m_Window{};
+
+	private:
+		static Application* s_Application;
 	};
 }

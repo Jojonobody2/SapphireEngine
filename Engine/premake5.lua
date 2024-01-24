@@ -9,8 +9,8 @@ project "Engine"
 
 	files
 	{
-		"src/**.h",
-		"src/**.cpp"
+		"Source/**.h",
+		"Source/**.cpp"
 	}
 
 	defines
@@ -25,16 +25,18 @@ project "Engine"
 
 	includedirs
 	{
-		"src",
-		"vendor/GLFW/include"
+		"Source",
+		"ThirdParty/GLFW/include"
 	}
 
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
+		defines "SAPPHIRE_LINUX"
 
 	filter "system:windows"
 		systemversion "latest"
+		defines "SAPPHIRE_WINDOWS"
 	
 	filter "configurations:Debug"
 		defines "SAPPHIRE_DEBUG"

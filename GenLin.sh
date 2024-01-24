@@ -1,1 +1,1 @@
-Engine/vendor/premake/premake5 codelite
+Engine/ThirdParty/premake/premake5 codelite

@@ -22,5 +22,7 @@ namespace Sapphire
 		
 	private:
 		GLFWwindow* m_Window;
+
+		static void WindowCloseCallback(GLFWwindow* Window);
 	};
 }

@@ -16,7 +16,7 @@ workspace "Sapphire"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 group "Dependencies"
-	include "Engine/vendor/GLFW"
+	include "Engine/ThirdParty/GLFW"
 group ""
 
 group "Core"
