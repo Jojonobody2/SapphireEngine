@@ -26,7 +26,11 @@ project "Editor"
 	filter "system:linux"
 		pic "On"
 		systemversion "latest"
-		links "GLFW"
+		links
+		{
+			"GLFW",
+			"spdlog"
+		}
 		defines "SAPPHIRE_LINUX"
 
 	filter "system:windows"

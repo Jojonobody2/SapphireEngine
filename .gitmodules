@@ -2,3 +2,7 @@
 	path = Engine/ThirdParty/GLFW
 	url = https://github.com/Jojonobody2/GLFW
 	ignore = dirty
+[submodule "Engine/ThirdParty/spdlog"]
+	path = Engine/ThirdParty/spdlog
+	url = https://github.com/Jojonobody2/spdlog
+	ignore = dirty

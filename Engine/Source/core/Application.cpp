@@ -1,5 +1,7 @@
 #include "Application.h"
 
+#include "Logger.h"
+
 #include <iostream>
 
 namespace Sapphire
@@ -9,6 +11,8 @@ namespace Sapphire
 	Application::Application(const ApplicationCreateInfo& ApplicationCI)
 	{
 		s_Application = this;
+
+		Logger::Init();
 
 		WindowCreateInfo WindowCI{};
 		WindowCI.Title = ApplicationCI.Name;

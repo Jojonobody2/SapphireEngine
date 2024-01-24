@@ -20,13 +20,15 @@ project "Engine"
 	
 	links
 	{
-		"GLFW"
+		"GLFW",
+		"spdlog"
 	}
 
 	includedirs
 	{
 		"Source",
-		"ThirdParty/GLFW/include"
+		"ThirdParty/GLFW/include",
+		"ThirdParty/spdlog/include"
 	}
 
 	filter "system:linux"
