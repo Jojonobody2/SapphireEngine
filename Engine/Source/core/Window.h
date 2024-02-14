@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Image.h"
+
 #include <memory>
 
 namespace Sapphire
@@ -20,9 +22,15 @@ namespace Sapphire
 		
 		virtual void Close() = 0;
 		virtual bool IsOpen() = 0;
+		virtual bool IsMinimized() = 0;
 		
+		virtual void SetTitle(const char* Title) = 0;
+		virtual void SetIcon(Image& Icon, Image& IconSm) = 0;
+
 		virtual uint32_t GetWidth() const = 0;
 		virtual uint32_t GetHeight() const = 0;
+		
+		virtual void* GetNativeWindow() = 0;
 		
 		static std::shared_ptr<Window> Create(const WindowCreateInfo& WindowCI);
 

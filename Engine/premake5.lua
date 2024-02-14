@@ -1,7 +1,7 @@
 project "Engine"
 	kind "StaticLib"
 	language "C++"
-	cppdialect "C++17"
+	cppdialect "C++20"
 	staticruntime "Off"
 
 	targetdir("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
@@ -10,7 +10,9 @@ project "Engine"
 	files
 	{
 		"Source/**.h",
-		"Source/**.cpp"
+		"Source/**.cpp",
+		"ThirdParty/stb_image/**.h",
+		"ThirdParty/stb_image/**.cpp",
 	}
 
 	defines
@@ -21,14 +23,19 @@ project "Engine"
 	links
 	{
 		"GLFW",
-		"spdlog"
+		"spdlog",
+		"imgui",
+		vulkansdk .. "/Lib/vulkan-1.lib"
 	}
 
 	includedirs
 	{
 		"Source",
 		"ThirdParty/GLFW/include",
-		"ThirdParty/spdlog/include"
+		"ThirdParty/spdlog/include",
+		"ThirdParty/stb_image",
+		"ThirdParty/imgui",
+		vulkansdk .. "/Include"
 	}
 
 	filter "system:linux"
@@ -41,7 +48,11 @@ project "Engine"
 		defines "SAPPHIRE_WINDOWS"
 	
 	filter "configurations:Debug"
-		defines "SAPPHIRE_DEBUG"
+		defines
+		{
+			"SAPPHIRE_DEBUG",
+			"SAPPHIRE_RENDER_DEBUG"
+		}
 		runtime "Debug"
 		symbols "On"
 

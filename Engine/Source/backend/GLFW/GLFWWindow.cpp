@@ -39,6 +39,30 @@ namespace Sapphire
 	{
 		return !glfwWindowShouldClose(m_Window);
 	}
+
+	bool GlfwWindow::IsMinimized()
+	{
+		return glfwGetWindowAttrib(m_Window, GLFW_ICONIFIED);
+	}
+
+	void GlfwWindow::SetTitle(const char* Title)
+	{
+		glfwSetWindowTitle(m_Window, Title);
+	}
+
+	void GlfwWindow::SetIcon(Image& Icon, Image& IconSm)
+	{
+		GLFWimage IconImages[2];
+		IconImages[0].width = Icon.GetWidth();
+		IconImages[0].height = Icon.GetHeight();
+		IconImages[0].pixels = Icon.GetPixels();
+
+		IconImages[1].width = IconSm.GetWidth();
+		IconImages[1].height = IconSm.GetHeight();
+		IconImages[1].pixels = IconSm.GetPixels();
+
+		glfwSetWindowIcon(m_Window, 2, IconImages);
+	}
 	
 	uint32_t GlfwWindow::GetWidth() const
 	{

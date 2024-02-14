@@ -14,10 +14,12 @@ workspace "Sapphire"
 	}
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+vulkansdk = os.getenv("VULKAN_SDK")
 
 group "Dependencies"
 	include "Engine/ThirdParty/GLFW"
 	include "Engine/ThirdParty/spdlog"
+	include "Engine/ThirdParty/imgui"
 group ""
 
 group "Core"
