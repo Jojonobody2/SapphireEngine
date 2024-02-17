@@ -1,11 +1,14 @@
 #pragma once
 
 #include "Image.h"
+#include "event/SapphireEvent.h"
 
 #include <memory>
 
 namespace Sapphire
 {
+	typedef void (*SapphireEventCallback)(Event& Event);
+
 	struct WindowCreateInfo
 	{
 		const char* Title;
@@ -27,9 +30,14 @@ namespace Sapphire
 		virtual void SetTitle(const char* Title) = 0;
 		virtual void SetIcon(Image& Icon, Image& IconSm) = 0;
 
+		virtual const char* GetClipboardString() = 0;
+		virtual void SetClipboardString(const char* String) = 0;
+
 		virtual uint32_t GetWidth() const = 0;
 		virtual uint32_t GetHeight() const = 0;
 		
+		virtual void SetEventCallback(SapphireEventCallback EventCallbackFn) = 0;
+
 		virtual void* GetNativeWindow() = 0;
 		
 		static std::shared_ptr<Window> Create(const WindowCreateInfo& WindowCI);

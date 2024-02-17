@@ -53,6 +53,8 @@ namespace Sapphire
 	VkImageCreateInfo CreateImageCreateInfo(VkFormat ImageFormat, VkImageUsageFlags ImageUsage, VkExtent3D ImageExtent);
 	VkImageViewCreateInfo CreateImageViewCreateInfo(VkFormat ImageFormat, VkImage Image, VkImageAspectFlags ImageAspect);
 
+	VkRenderingAttachmentInfo ColorAttachmentInfo(VkImageView ImageView, VkClearValue* ClearValue, VkImageLayout ImageLayout);
+
 	void TransitionImage(VkCommandBuffer Cmd, VkImage Image, VkImageLayout CurrentLayout, VkImageLayout NewLayout);
 	void CopyImageToImage(VkCommandBuffer Cmd, VkImage SrcImage, VkImage DstImage, VkExtent2D SrcSize, VkExtent2D DstSize);
 

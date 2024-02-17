@@ -1,5 +1,7 @@
 #pragma once
 
+#include "event/SapphireEvent.h"
+
 #include <string>
 
 namespace Sapphire
@@ -9,6 +11,7 @@ namespace Sapphire
 	public:
 		virtual void OnAttach() {};
 		virtual void OnUpdate() {};
+		virtual void OnEvent(Event& Event) {};
 		virtual void OnDetach() {};
 	};
 }

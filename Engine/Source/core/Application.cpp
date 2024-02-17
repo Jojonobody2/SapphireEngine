@@ -2,6 +2,10 @@
 
 #include "Logger.h"
 
+#include "imgui/ImGuiLayer.h"
+
+#include "imgui/ImGuiDebuggerLogSink.h"
+
 #include "renderer/RenderEngine.h"
 
 #include <iostream>
@@ -15,14 +19,19 @@ namespace Sapphire
 	{
 		s_Application = this;
 
-		Logger::Init();
+		m_Debugger = std::make_shared<Debugger>();
+
+		Logger::Init(m_Debugger.get());
 
 		WindowCreateInfo WindowCI{};
 		WindowCI.Title = ApplicationCI.Name;
-		WindowCI.Width = 1280;
-		WindowCI.Height = 720;
+		WindowCI.Width = 1920;
+		WindowCI.Height = 1080;
 		
 		m_Window = Window::Create(WindowCI);
+		m_Window->SetEventCallback(Application::EventCallback);
+
+		PushLayer(new ImGuiLayer());
 
 		RenderEngine::Init();
 
@@ -47,6 +56,8 @@ namespace Sapphire
 				Layer->OnUpdate();
 			}
 
+			m_Debugger->Draw();
+
 			if (m_Window->IsOpen() && !m_Window->IsMinimized())
 			{
 				RenderEngine::Submit();
@@ -63,5 +74,13 @@ namespace Sapphire
 	{
 		Layer->OnAttach();
 		m_Layers.push_back(Layer);
+	}
+
+	void Application::EventCallback(Event& Event)
+	{
+		for (Layer* Layer : Application::Get().m_Layers)
+		{
+			Layer->OnEvent(Event);
+		}
 	}
 }

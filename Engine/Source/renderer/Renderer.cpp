@@ -5,8 +5,7 @@
 #include "core/Application.h"
 
 #include <imgui.h>
-#include <backends/imgui_impl_vulkan.h>
-#include "core/imgui_impl_glfw.h"
+#include <imgui_impl_vulkan.h>
 
 #define VMA_IMPLEMENTATION
 #include <vma/vk_mem_alloc.h>
@@ -307,6 +306,12 @@ namespace Sapphire
 			m_DrawImageDescriptorSetLayout = Builder.Build(m_Device, VK_SHADER_STAGE_COMPUTE_BIT);
 		}
 
+		m_DeletionQueue.PushFunction([&]()
+			{
+				m_DescriptorAllocator.DestroyDescriptorPool(m_Device);
+				vkDestroyDescriptorSetLayout(m_Device, m_DrawImageDescriptorSetLayout, nullptr);
+			});
+
 		m_DrawImageDescriptor = m_DescriptorAllocator.AllocateSet(m_Device, m_DrawImageDescriptorSetLayout);
 
 		VkDescriptorImageInfo ImageInfo{};
@@ -384,30 +389,40 @@ namespace Sapphire
 		VkDescriptorPool ImGuiDescriptorPool;
 		VkCheckResult(vkCreateDescriptorPool(m_Device, &DescriptorPoolCreateInfo, nullptr, &ImGuiDescriptorPool));
 
-		ImGui::CreateContext();
-
-		ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)Application::Get().GetWindow()->GetNativeWindow(), true);
-
 		ImGui_ImplVulkan_InitInfo ImGuiVulkanInitInfo{};
 		ImGuiVulkanInitInfo.Instance = m_Instance;
 		ImGuiVulkanInitInfo.PhysicalDevice = m_PhysicalDevice;
 		ImGuiVulkanInitInfo.Device = m_Device;
 		ImGuiVulkanInitInfo.Queue = m_GraphicsQueue;
 		ImGuiVulkanInitInfo.DescriptorPool = ImGuiDescriptorPool;
-		ImGuiVulkanInitInfo.MinImageCount = 3;
-		ImGuiVulkanInitInfo.ImageCount = 3;
+		ImGuiVulkanInitInfo.MinImageCount = SwapchainImageCount;
+		ImGuiVulkanInitInfo.ImageCount = SwapchainImageCount;
 		ImGuiVulkanInitInfo.UseDynamicRendering = true;
+		ImGuiVulkanInitInfo.ColorAttachmentFormat = SurfaceFormat.format;
 		ImGuiVulkanInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
 		ImGui_ImplVulkan_Init(&ImGuiVulkanInitInfo, VK_NULL_HANDLE);
 
-		ImGui_ImplVulkan_CreateFontsTexture();
+		m_ImmediateContext.SubmitImmediate(m_Device, [&](VkCommandBuffer Cmd)
+			{
+				ImGui_ImplVulkan_CreateFontsTexture(Cmd);
+			});
 
+		ImGui_ImplVulkan_DestroyFontUploadObjects();
 
+		m_DeletionQueue.PushFunction([=]()
+			{
+				vkDestroyDescriptorPool(m_Device, ImGuiDescriptorPool, nullptr);
+				ImGui_ImplVulkan_Shutdown();
+			});
 	}
 		
 	void Renderer::Draw()
 	{
+		ImGui_ImplVulkan_NewFrame();
+
+		ImGui::Render();
+
 		VkCheckResult(vkWaitForFences(m_Device, 1, &GetCurrentFrame().RenderFence, true, UINT64_MAX));
 		VkCheckResult(vkResetFences(m_Device, 1, &GetCurrentFrame().RenderFence));
 
@@ -449,6 +464,28 @@ namespace Sapphire
 		CopyImageToImage(Cmd, m_DrawImage.Image, m_SwapchainImages[SwapchainImageIndex], m_DrawExtent, m_SwapchainExtent);
 
 		TransitionImage(Cmd, m_SwapchainImages[SwapchainImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+		VkRenderingAttachmentInfo RenderingColorAttachmentInfo = ColorAttachmentInfo(m_SwapchainImageViews[SwapchainImageIndex], nullptr,
+			VK_IMAGE_LAYOUT_GENERAL);
+
+		VkRenderingInfo RenderingInfo{};
+		RenderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		RenderingInfo.pNext = nullptr;
+		RenderingInfo.renderArea = VkRect2D{ VkOffset2D{ 0, 0 }, m_SwapchainExtent };
+		RenderingInfo.layerCount = 1;
+		RenderingInfo.colorAttachmentCount = 1;
+		RenderingInfo.pColorAttachments = &RenderingColorAttachmentInfo;
+		RenderingInfo.pDepthAttachment = nullptr;
+		RenderingInfo.pStencilAttachment = nullptr;
+
+		vkCmdBeginRendering(Cmd, &RenderingInfo);
+
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), Cmd);
+
+		vkCmdEndRendering(Cmd);
+
+		TransitionImage(Cmd, m_SwapchainImages[SwapchainImageIndex], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 		VkCheckResult(vkEndCommandBuffer(Cmd));

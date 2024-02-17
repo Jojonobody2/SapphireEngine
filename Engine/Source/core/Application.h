@@ -3,6 +3,8 @@
 #include "Window.h"
 #include "Layer.h"
 
+#include "imgui/ImGuiDebugger.h"
+
 #include <vector>
 
 namespace Sapphire
@@ -30,14 +32,17 @@ namespace Sapphire
 
 	public:
 		std::shared_ptr<Window> GetWindow() { return m_Window; }
+		std::shared_ptr<Debugger> GetDebugger() { return m_Debugger; }
+		std::vector<Layer*> m_Layers{};
 
 	private:
 		bool m_IsRunning{};
 		const char* m_Name{};
 
-		std::vector<Layer*> m_Layers{};
-
 		std::shared_ptr<Window> m_Window{};
+		std::shared_ptr<Debugger> m_Debugger{};
+
+		static void EventCallback(Event& Event);
 
 	private:
 		static Application* s_Application;

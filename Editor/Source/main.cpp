@@ -16,7 +16,7 @@ class BaseLayer : public Sapphire::Layer
 
 const Sapphire::ApplicationCreateInfo SapphireInitialize()
 {
-	Sapphire::ApplicationCreateInfo AppCI;
+	Sapphire::ApplicationCreateInfo AppCI{};
 	AppCI.Name = "Sapphire Editor";
 	AppCI.BaseLayer = new BaseLayer();
 

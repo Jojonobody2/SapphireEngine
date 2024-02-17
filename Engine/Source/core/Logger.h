@@ -1,9 +1,9 @@
 #pragma once
 
-#pragma warning(push, 0)
+#pragma warning(disable : 4996)
+
 #include <spdlog/spdlog.h>
-#include <spdlog/fmt/ostr.h>
-#pragma warning(pop)
+#include <imgui/ImGuiDebugger.h>
 
 #include <memory>
 
@@ -12,7 +12,7 @@ namespace Sapphire
 	class Logger
 	{
 	public:
-		static void Init();
+		static void Init(Debugger* Debugger);
 
 		static std::shared_ptr<spdlog::logger>& GetLogger() { return s_Logger; }
 

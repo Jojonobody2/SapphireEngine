@@ -7,6 +7,7 @@
 #endif
 
 #include <fstream>
+#include <algorithm>
 
 namespace Sapphire
 {
@@ -324,6 +325,20 @@ namespace Sapphire
 		ImageViewCreateInfo.subresourceRange.aspectMask = ImageAspect;
 
 		return ImageViewCreateInfo;
+	}
+
+	VkRenderingAttachmentInfo ColorAttachmentInfo(VkImageView ImageView, VkClearValue* ClearValue, VkImageLayout ImageLayout)
+	{
+		VkRenderingAttachmentInfo RenderingColorAttachmentInfo{};
+		RenderingColorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		RenderingColorAttachmentInfo.pNext = nullptr;
+		RenderingColorAttachmentInfo.imageView = ImageView;
+		RenderingColorAttachmentInfo.imageLayout = ImageLayout;
+		RenderingColorAttachmentInfo.loadOp = ClearValue ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+		RenderingColorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		if (ClearValue) RenderingColorAttachmentInfo.clearValue = *ClearValue;
+
+		return RenderingColorAttachmentInfo;
 	}
 
 	void TransitionImage(VkCommandBuffer Cmd, VkImage Image, VkImageLayout CurrentLayout, VkImageLayout NewLayout)
