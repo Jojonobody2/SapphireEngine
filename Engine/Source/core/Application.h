@@ -12,7 +12,7 @@ namespace Sapphire
 	struct ApplicationCreateInfo
 	{
 		const char* Name;
-		Layer* BaseLayer;
+		std::shared_ptr<Layer> BaseLayer;
 	};
 
 	class Application
@@ -24,7 +24,7 @@ namespace Sapphire
 		void Run();
 		void Close();
 
-		void PushLayer(Layer* Layer);
+		void PushLayer(std::shared_ptr<Layer> Layer);
 
 		const char* GetName() { return m_Name; }
 
@@ -32,8 +32,6 @@ namespace Sapphire
 
 	public:
 		std::shared_ptr<Window> GetWindow() { return m_Window; }
-		std::shared_ptr<Debugger> GetDebugger() { return m_Debugger; }
-		std::vector<Layer*> m_Layers{};
 
 	private:
 		bool m_IsRunning{};
@@ -41,6 +39,8 @@ namespace Sapphire
 
 		std::shared_ptr<Window> m_Window{};
 		std::shared_ptr<Debugger> m_Debugger{};
+
+		std::vector<std::shared_ptr<Layer>> m_Layers;
 
 		static void EventCallback(Event& Event);
 

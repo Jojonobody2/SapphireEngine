@@ -28,7 +28,7 @@ namespace Sapphire
 		virtual bool IsMinimized() = 0;
 		
 		virtual void SetTitle(const char* Title) = 0;
-		virtual void SetIcon(Image& Icon, Image& IconSm) = 0;
+		virtual void SetIcon(Image Icon, Image IconSm) = 0;
 
 		virtual const char* GetClipboardString() = 0;
 		virtual void SetClipboardString(const char* String) = 0;

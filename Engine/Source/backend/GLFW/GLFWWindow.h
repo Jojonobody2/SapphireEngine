@@ -20,7 +20,7 @@ namespace Sapphire
 		bool IsMinimized() override;
 		
 		void SetTitle(const char* Title) override;
-		void SetIcon(Image& Icon, Image& IconSm) override;
+		void SetIcon(Image Icon, Image IconSm) override;
 
 		const char* GetClipboardString() override;
 		void SetClipboardString(const char* String) override;

@@ -137,11 +137,6 @@ namespace Sapphire
 		}
 	}
 
-	void ImGuiLayer::OnDetach()
-	{
-		ImGui::DestroyContext();
-	}
-
 	ImGuiKey ImGuiLayer::TranslateKey(KeyCode Key)
 	{
 		switch (Key)

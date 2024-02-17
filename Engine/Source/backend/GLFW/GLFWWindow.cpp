@@ -58,7 +58,7 @@ namespace Sapphire
 		glfwSetWindowTitle(m_Window, Title);
 	}
 
-	void GlfwWindow::SetIcon(Image& Icon, Image& IconSm)
+	void GlfwWindow::SetIcon(Image Icon, Image IconSm)
 	{
 		GLFWimage IconImages[2];
 		IconImages[0].width = Icon.GetWidth();

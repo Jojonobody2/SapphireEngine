@@ -34,6 +34,5 @@ namespace Sapphire
 
 		void ClearLog();
 		void AddLog(const Message& Message);
-		int TextEditCallback(ImGuiInputTextCallbackData* data);
 	};
 }

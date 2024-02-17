@@ -31,7 +31,7 @@ namespace Sapphire
 		m_Window = Window::Create(WindowCI);
 		m_Window->SetEventCallback(Application::EventCallback);
 
-		PushLayer(new ImGuiLayer());
+		PushLayer(std::make_shared<ImGuiLayer>());
 
 		RenderEngine::Init();
 
@@ -42,6 +42,11 @@ namespace Sapphire
 
 	Application::~Application()
 	{
+		for (int i = 0; i < m_Layers.size(); i++)
+		{
+			m_Layers[i]->OnDetach();
+		}
+
 		RenderEngine::Shutdown();
 	}
 
@@ -51,7 +56,7 @@ namespace Sapphire
 		{
 			m_Window->Update();
 
-			for (Layer* Layer : m_Layers)
+			for (std::shared_ptr<Layer> Layer : m_Layers)
 			{
 				Layer->OnUpdate();
 			}
@@ -70,7 +75,7 @@ namespace Sapphire
 		m_IsRunning = false;
 	}
 
-	void Application::PushLayer(Layer* Layer)
+	void Application::PushLayer(std::shared_ptr<Layer> Layer)
 	{
 		Layer->OnAttach();
 		m_Layers.push_back(Layer);
@@ -78,7 +83,7 @@ namespace Sapphire
 
 	void Application::EventCallback(Event& Event)
 	{
-		for (Layer* Layer : Application::Get().m_Layers)
+		for (std::shared_ptr<Layer> Layer : Application::Get().m_Layers)
 		{
 			Layer->OnEvent(Event);
 		}

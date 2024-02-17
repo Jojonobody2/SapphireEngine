@@ -13,7 +13,6 @@ namespace Sapphire
 		void OnAttach() override;
 		void OnUpdate() override;
 		void OnEvent(Event& Event);
-		void OnDetach() override;
 
 	private:
 		ImGuiKey TranslateKey(KeyCode Key);
