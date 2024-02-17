@@ -15,7 +15,8 @@ project "Editor"
 
 	includedirs
 	{
-		"%{wks.location}/Engine/Source"
+		"%{wks.location}/Engine/Source",
+		"%{wks.location}/Engine/ThirdParty/imgui"
 	}
 
 	links
