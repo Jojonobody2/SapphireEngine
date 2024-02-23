@@ -20,6 +20,8 @@ group "Dependencies"
 	include "Engine/ThirdParty/GLFW"
 	include "Engine/ThirdParty/spdlog"
 	include "Engine/ThirdParty/imgui"
+	include "Engine/ThirdParty/fastgltf"
+	include "Engine/ThirdParty/simdjson"
 group ""
 
 group "Core"

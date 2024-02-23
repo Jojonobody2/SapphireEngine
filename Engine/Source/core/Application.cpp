@@ -3,7 +3,6 @@
 #include "Logger.h"
 
 #include "imgui/ImGuiLayer.h"
-
 #include "imgui/ImGuiDebuggerLogSink.h"
 
 #include "renderer/RenderEngine.h"

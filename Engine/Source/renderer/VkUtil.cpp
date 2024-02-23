@@ -341,6 +341,20 @@ namespace Sapphire
 		return RenderingColorAttachmentInfo;
 	}
 
+	VkRenderingAttachmentInfo DepthAttachmentInfo(VkImageView ImageView, VkImageLayout ImageLayout)
+	{
+		VkRenderingAttachmentInfo RenderingDepthAttachmentInfo{};
+		RenderingDepthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		RenderingDepthAttachmentInfo.pNext = nullptr;
+		RenderingDepthAttachmentInfo.imageView = ImageView;
+		RenderingDepthAttachmentInfo.imageLayout = ImageLayout;
+		RenderingDepthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		RenderingDepthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		RenderingDepthAttachmentInfo.clearValue.depthStencil.depth = 0.0f;
+
+		return RenderingDepthAttachmentInfo;
+	}
+
 	void TransitionImage(VkCommandBuffer Cmd, VkImage Image, VkImageLayout CurrentLayout, VkImageLayout NewLayout)
 	{
 		VkImageSubresourceRange ImageSubresourceRange = CreateImageSubresourceRange(

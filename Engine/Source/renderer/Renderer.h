@@ -6,9 +6,12 @@
 #include <vulkan/vulkan.h>
 #include <vma/vk_mem_alloc.h>
 
+#include <glm/glm.hpp>
+
 #include <vector>
 #include <queue>
 #include <functional>
+#include <memory>
 
 constexpr auto FRAMES_IN_FLIGTH = 2;
 
@@ -44,12 +47,22 @@ namespace Sapphire
 		DeletionQueue DeletionQueue;
 	};
 
+	struct GradientPushConstants
+	{
+		glm::vec4 data1;
+		glm::vec4 data2;
+		glm::vec4 data3;
+		glm::vec4 data4;
+	};
+
 	class Renderer
 	{
 	public:
 		void Init();
 		void Draw();
 		void Shutdown();
+
+		GpuMeshBuffer UploadMesh(std::span<Vertex> Vertices, std::span<uint32_t> Indices);
 
 	private:
 		VkInstance m_Instance{};
@@ -64,6 +77,7 @@ namespace Sapphire
 		std::vector<VkImageView> m_SwapchainImageViews{};
 		VmaAllocator m_Allocator{};
 		AllocatedImage m_DrawImage{};
+		AllocatedImage m_DepthImage{};
 		VkExtent2D m_DrawExtent{};
 		DescriptorAllocator m_DescriptorAllocator{};
 
@@ -73,6 +87,11 @@ namespace Sapphire
 		VkPipeline m_GradientPipeline{};
 		VkPipelineLayout m_GradientPipelineLayout{};
 
+		VkPipeline m_TrianglePipeline{};
+		VkPipelineLayout m_TrianglePipelineLayout{};
+
+		std::vector<std::shared_ptr<MeshAsset>> m_TestMeshes;
+
 		DeletionQueue m_DeletionQueue{};
 
 		ImmediateContext m_ImmediateContext{};
@@ -80,7 +99,15 @@ namespace Sapphire
 		FrameData m_FrameData[FRAMES_IN_FLIGTH];
 		FrameData& GetCurrentFrame() { return m_FrameData[m_FrameIndex]; }
 
+		bool ResizeRequested = false;
+
 		uint32_t m_FrameIndex{};
+
+		AllocatedBuffer CreateBuffer(size_t BufferSize, VkBufferUsageFlags BufferUsage, VmaMemoryUsage BufferMemoryUsage);
+		void DestroyBuffer(const AllocatedBuffer& Buffer);
+
+		void CreateSwapchain();
+		void ResizeSwapchain();
 
 		#ifdef SAPPHIRE_RENDER_DEBUG
 		VkDebugUtilsMessengerEXT m_DebugMessenger{};

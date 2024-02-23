@@ -1,9 +1,12 @@
 #pragma once
 
+#include "Types.h"
+
 #include "core/Logger.h"
 #include "core/Application.h"
 
 #include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 
 #include <optional>
 
@@ -54,6 +57,7 @@ namespace Sapphire
 	VkImageViewCreateInfo CreateImageViewCreateInfo(VkFormat ImageFormat, VkImage Image, VkImageAspectFlags ImageAspect);
 
 	VkRenderingAttachmentInfo ColorAttachmentInfo(VkImageView ImageView, VkClearValue* ClearValue, VkImageLayout ImageLayout);
+	VkRenderingAttachmentInfo DepthAttachmentInfo(VkImageView ImageView, VkImageLayout ImageLayout);
 
 	void TransitionImage(VkCommandBuffer Cmd, VkImage Image, VkImageLayout CurrentLayout, VkImageLayout NewLayout);
 	void CopyImageToImage(VkCommandBuffer Cmd, VkImage SrcImage, VkImage DstImage, VkExtent2D SrcSize, VkExtent2D DstSize);

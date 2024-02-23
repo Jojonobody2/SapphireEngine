@@ -24,6 +24,8 @@ project "Engine"
 	{
 		"GLFW",
 		"spdlog",
+		"fastgltf",
+		"simdjson",
 		"imgui",
 		vulkansdk .. "/Lib/vulkan-1.lib"
 	}
@@ -35,6 +37,9 @@ project "Engine"
 		"ThirdParty/spdlog/include",
 		"ThirdParty/stb_image",
 		"ThirdParty/imgui",
+		"ThirdParty/glm",
+		"ThirdParty/fastgltf/include",
+		"ThirdParty/simdjson/include",
 		vulkansdk .. "/Include"
 	}
 

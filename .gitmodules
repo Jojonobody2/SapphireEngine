@@ -10,3 +10,15 @@
 	path = Engine/ThirdParty/imgui
 	url = https://github.com/Jojonobody2/imgui
 	ignore = dirty
+[submodule "Engine/ThirdParty/glm"]
+	path = Engine/ThirdParty/glm
+	url = https://github.com/g-truc/glm
+	ignore = dirty
+[submodule "Engine/ThirdParty/fastgltf"]
+	path = Engine/ThirdParty/fastgltf
+	url = https://github.com/Jojonobody2/fastgltf
+	ignore = dirty
+[submodule "Engine/ThirdParty/simdjson"]
+	path = Engine/ThirdParty/simdjson
+	url = https://github.com/Jojonobody2/simdjson
+	ignore = dirty
