@@ -62,7 +62,7 @@ namespace Sapphire
 
 					fastgltf::iterateAccessor<std::uint32_t>(GLTF, IndexAccessor, [&](std::uint32_t Index)
 						{
-							Indices.push_back(Index + InitialVertex);
+							Indices.push_back(Index + (uint32_t)InitialVertex);
 						});
 				}
 
