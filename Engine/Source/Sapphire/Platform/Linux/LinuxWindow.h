@@ -3,6 +3,7 @@
 #ifdef SAPPHIRE_LINUX
 
 #include "Sapphire/Core/IWindow.h"
+#include "Sapphire/Core/InputCodes.h"
 
 #include <GLFW/glfw3.h>
 
@@ -24,8 +25,22 @@ namespace Sapphire
 
         void SetWindowMode(WindowMode& WindowMode) override;
 
+        void SetEventCallback(SapphireEventCallback EventCallbackFn) override;
+
+
     private:
         GLFWwindow* m_Window{};
+        SapphireEventCallback m_EventCallbackFn{};
+
+    private:
+        static void KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods);
+        static void CharCallback(GLFWwindow* Window, uint32_t KeyCode);
+        static void MouseButtonCallback(GLFWwindow* Window, int Button, int Action, int Mods);
+        static void MouseScrollCallback(GLFWwindow* Window, double xOffset, double yOffset);
+        static void MouseMovedCallback(GLFWwindow* Window, double xPos, double yPos);
+
+        static KeyCode TranslateKey(int KeyCode);
+        static MouseCode TranslateButton(int MouseButton);
     };
 }
 

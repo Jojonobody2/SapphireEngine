@@ -13,3 +13,6 @@
 [submodule "Engine/ThirdParty/stb"]
 	path = Engine/ThirdParty/stb
 	url = https://github.com/nothings/stb
+[submodule "Engine/ThirdParty/libwebp"]
+	path = Engine/ThirdParty/libwebp
+	url = https://github.com/webmproject/libwebp

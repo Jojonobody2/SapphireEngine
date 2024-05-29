@@ -4,6 +4,7 @@
 #include <vector>
 #include "Base.h"
 #include "Image.h"
+#include "Sapphire/Event/SapphireEvent.h"
 
 namespace Sapphire
 {
@@ -58,6 +59,8 @@ namespace Sapphire
         WindowType GetType() override { return WindowType::WINDOW_TYPE_BORDERLESS_FULLSCREEN; }
     };
 
+    typedef void (*SapphireEventCallback)(Event& Event);
+
     class IWindow
     {
     public:
@@ -72,6 +75,8 @@ namespace Sapphire
         virtual std::vector<MonitorMode> GetMonitorModes() = 0;
 
         virtual void SetWindowMode(WindowMode& WindowMode) = 0;
+
+        virtual void SetEventCallback(SapphireEventCallback EventCallbackFn) = 0;
 
         static SharedPtr<IWindow> CreateWindow(const std::string& Title, uint32_t Width, uint32_t Height);
     };

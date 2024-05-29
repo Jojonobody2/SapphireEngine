@@ -19,6 +19,11 @@ public:
 
     }
 
+    void OnEvent(Sapphire::Event& Event) override
+    {
+
+    }
+
     void OnDetach() override
     {
 

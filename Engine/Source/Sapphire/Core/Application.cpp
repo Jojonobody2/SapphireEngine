@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include <vulkan/vulkan.h>
+
 namespace Sapphire
 {
     Application* Application::s_Application = nullptr;
@@ -16,6 +18,9 @@ namespace Sapphire
         Logger::Init();
 
         m_Window = IWindow::CreateWindow(m_Name, 1280, 720);
+        m_Window->SetEventCallback(EventCallback);
+
+        m_Renderer = CreateSharedPtr<Renderer>();
 
         PushLayer(AppInfo.BaseLayer);
 
@@ -50,5 +55,13 @@ namespace Sapphire
     {
         Layer->OnAttach();
         m_Layers.push_back(Layer);
+    }
+
+    void Application::EventCallback(Event &Event)
+    {
+        for (ILayer* Layer : Application::Get().m_Layers)
+        {
+            Layer->OnEvent(Event);
+        }
     }
 }
