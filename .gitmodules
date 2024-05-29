@@ -1,0 +1,9 @@
+[submodule "Engine/ThirdParty/glfw"]
+	path = Engine/ThirdParty/glfw
+	url = https://github.com/glfw/glfw
+[submodule "Engine/ThirdParty/spdlog"]
+	path = Engine/ThirdParty/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "Engine/ThirdParty/libpng"]
+	path = Engine/ThirdParty/libpng
+	url = https://github.com/pnggroup/libpng
