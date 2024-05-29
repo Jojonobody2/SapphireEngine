@@ -9,7 +9,6 @@ namespace Sapphire
     {
     public:
         uint32_t Width, Height;
-        uint32_t Channels;
         std::vector<uint8_t> Pixels;
     };
 }

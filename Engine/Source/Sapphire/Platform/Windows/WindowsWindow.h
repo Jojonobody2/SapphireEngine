@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef SAPPHIRE_LINUX
+#ifdef SAPPHIRE_WINDOWS
 
 #include "Sapphire/Core/IWindow.h"
 
@@ -8,11 +8,11 @@
 
 namespace Sapphire
 {
-    class LinuxWindow : public IWindow
+    class WindowsWindow : public IWindow
     {
     public:
-        LinuxWindow(const std::string& Title, uint32_t Width, uint32_t Height);
-        ~LinuxWindow() override;
+        WindowsWindow(const std::string& Title, uint32_t Width, uint32_t Height);
+        ~WindowsWindow() override;
 
         void PollEvents() override;
         bool IsOpen() override;

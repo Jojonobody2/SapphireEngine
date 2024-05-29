@@ -28,7 +28,7 @@ public:
 Sapphire::ApplicationInfo SapphireInitialize()
 {
     Sapphire::ApplicationInfo AppInfo{};
-    AppInfo.Name = "SapphireEditor";
+    AppInfo.Name = "Sapphire Editor";
     AppInfo.BaseLayer = new EditorLayer();
 
     return AppInfo;

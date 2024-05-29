@@ -2,6 +2,8 @@
 
 #ifdef SAPPHIRE_LINUX
     #include "Sapphire/Platform/Linux/LinuxWindow.h"
+#elif SAPPHIRE_WINDOWS
+    #include "Sapphire/Platform/Windows/WindowsWindow.h"
 #else
     #error "PLATFORM NOT IMPLEMENTED (YET?)"
 #endif
@@ -12,6 +14,8 @@ namespace Sapphire
     {
     #ifdef SAPPHIRE_LINUX
         return CreateSharedPtr<LinuxWindow>(Title, Width, Height);
+    #elif SAPPHIRE_WINDOWS
+        return CreateSharedPtr<WindowsWindow>(Title, Width, Height);
     #else
         #error "PLATFORM NOT IMPLEMENTED (YET?)"
     #endif

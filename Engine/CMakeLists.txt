@@ -3,11 +3,8 @@ cmake_minimum_required(VERSION 3.20)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(PNG_STATIC ON)
-
 add_subdirectory(ThirdParty/glfw)
 add_subdirectory(ThirdParty/spdlog)
-add_subdirectory(ThirdParty/libpng)
 
 project(Engine)
 
@@ -33,13 +30,19 @@ add_library(Engine
         Source/Sapphire/Logging/Logger.cpp
         Source/Sapphire/Core/ILayer.h
         Source/Sapphire/Core/Image.h
+        Source/Sapphire/Platform/Windows/WindowsWindow.cpp
+        Source/Sapphire/Platform/Windows/WindowsWindow.h
+        Source/Sapphire/Import/Image/ImageImporter.cpp
+        Source/Sapphire/Import/Image/ImageImporter.h
+        Source/Sapphire/Import/Image/Impl/STBImageImporter.cpp
+        Source/Sapphire/Import/Image/Impl/STBImageImporter.h
 )
 
 target_include_directories(Engine
-        PRIVATE ThirdParty/glfw/include ThirdParty/libpng
+        PRIVATE ThirdParty/glfw/include ThirdParty/stb
         PUBLIC ThirdParty/spdlog/include Source)
 target_link_libraries(Engine
-        PRIVATE glfw png_static
+        PRIVATE glfw
         PUBLIC spdlog)
 
 if (OS STREQUAL "Windows")

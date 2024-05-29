@@ -8,6 +8,7 @@ namespace Sapphire
     class ILayer
     {
     public:
+        virtual ~ILayer() = default;
         virtual void OnAttach() {};
         virtual void OnUpdate() {};
         virtual void OnDetach() {};

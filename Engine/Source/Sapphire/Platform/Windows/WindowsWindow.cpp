@@ -1,11 +1,12 @@
-#ifdef SAPPHIRE_LINUX
+#ifdef SAPPHIRE_WINDOWS
 
-#include "LinuxWindow.h"
+#include "WindowsWindow.h"
+
 #include "Sapphire/Logging/Logger.h"
 
 namespace Sapphire
 {
-    LinuxWindow::LinuxWindow(const std::string& Title, uint32_t Width, uint32_t Height)
+    WindowsWindow::WindowsWindow(const std::string& Title, uint32_t Width, uint32_t Height)
     {
         glfwInit();
 
@@ -17,28 +18,28 @@ namespace Sapphire
         glfwSetWindowPos(m_Window, (VidMode->width - Width) / 2, (VidMode->height - Height) / 2);
     }
 
-    LinuxWindow::~LinuxWindow()
+    WindowsWindow::~WindowsWindow()
     {
         glfwDestroyWindow(m_Window);
         glfwTerminate();
     }
 
-    void LinuxWindow::PollEvents()
+    void WindowsWindow::PollEvents()
     {
         glfwPollEvents();
     }
 
-    bool LinuxWindow::IsOpen()
+    bool WindowsWindow::IsOpen()
     {
         return !glfwWindowShouldClose(m_Window);
     }
 
-    void LinuxWindow::SetTitle(const std::string& Title)
+    void WindowsWindow::SetTitle(const std::string& Title)
     {
         glfwSetWindowTitle(m_Window, Title.c_str());
     }
 
-    std::vector<MonitorMode> LinuxWindow::GetMonitorModes()
+    std::vector<MonitorMode> WindowsWindow::GetMonitorModes()
     {
         std::vector<MonitorMode> MonitorModes;
 
@@ -53,7 +54,7 @@ namespace Sapphire
         return MonitorModes;
     }
 
-    void LinuxWindow::SetWindowMode(WindowMode& WindowMode)
+    void WindowsWindow::SetWindowMode(WindowMode& WindowMode)
     {
         switch(WindowMode.GetType())
         {
@@ -123,7 +124,7 @@ namespace Sapphire
         }
     }
 
-    void LinuxWindow::SetIcon(Image& Image)
+    void WindowsWindow::SetIcon(Image& Image)
     {
         GLFWimage GLFWImage{};
         GLFWImage.width = (int32_t)Image.Width;

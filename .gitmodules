@@ -7,3 +7,9 @@
 [submodule "Engine/ThirdParty/libpng"]
 	path = Engine/ThirdParty/libpng
 	url = https://github.com/pnggroup/libpng
+[submodule "Engine/ThirdParty/zlib"]
+	path = Engine/ThirdParty/zlib
+	url = https://github.com/madler/zlib
+[submodule "Engine/ThirdParty/stb"]
+	path = Engine/ThirdParty/stb
+	url = https://github.com/nothings/stb
