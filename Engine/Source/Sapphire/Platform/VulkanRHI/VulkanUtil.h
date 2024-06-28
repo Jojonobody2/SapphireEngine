@@ -1,15 +1,19 @@
-#include <vulkan/vulkan.h>
 #include "Sapphire/Logging/Logger.h"
+
+#include <vulkan/vulkan.h>
 
 namespace Sapphire
 {
-    void VkCheck(VkResult Result)
+    void VkCheck(VkResult Result);
+
+    bool CheckInstanceLayerSupport(const std::vector<const char*>& Layers);
+    bool CheckInstanceExtensionsSupport(const std::vector<const char*>& Extensions);
+
+    struct QueueFamilyIndices
     {
-    #ifdef SAPPHIRE_RENDER_DEBUG
-        if (Result != VK_SUCCESS)
-        {
-            SAPPHIRE_ENGINE_ERROR("Vulkan retured result: {}", (int)Result);
-        }
-    #endif
-    }
+        std::optional<uint32_t> GraphicsFamily{};
+        std::optional<uint32_t> PresentFamily{};
+    };
+
+    QueueFamilyIndices SelectQueueFamilies(VkPhysicalDevice PhysicalDevice, VkSurfaceKHR Surface);
 }

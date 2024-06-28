@@ -2,10 +2,6 @@
 
 #include "Sapphire/Logging/Logger.h"
 
-#include <iostream>
-
-#include <vulkan/vulkan.h>
-
 namespace Sapphire
 {
     Application* Application::s_Application = nullptr;
@@ -16,6 +12,7 @@ namespace Sapphire
         s_Application = this;
 
         Logger::Init();
+        SAPPHIRE_ENGINE_INFO("Initializing Engine");
 
         m_Window = IWindow::CreateWindow(m_Name, 1280, 720);
         m_Window->SetEventCallback(EventCallback);
@@ -23,8 +20,6 @@ namespace Sapphire
         m_Renderer = CreateSharedPtr<Renderer>();
 
         PushLayer(AppInfo.BaseLayer);
-
-        SAPPHIRE_ENGINE_INFO("Initializing Engine");
     }
 
     Application::~Application()

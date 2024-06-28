@@ -24,9 +24,9 @@ namespace Sapphire
         std::vector<MonitorMode> GetMonitorModes() override;
 
         void SetWindowMode(WindowMode& WindowMode) override;
-
         void SetEventCallback(SapphireEventCallback EventCallbackFn) override;
 
+        void* GetNativeWindow() override;
 
     private:
         GLFWwindow* m_Window{};

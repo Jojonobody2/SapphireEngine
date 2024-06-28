@@ -149,6 +149,11 @@ namespace Sapphire
         m_EventCallbackFn = EventCallbackFn;
     }
 
+    void* LinuxWindow::GetNativeWindow()
+    {
+        return m_Window;
+    }
+
     void LinuxWindow::KeyCallback(GLFWwindow* Window, int Key, int Scancode, int Action, int Mods)
     {
         LinuxWindow* pWindow = (LinuxWindow*)glfwGetWindowUserPointer(Window);

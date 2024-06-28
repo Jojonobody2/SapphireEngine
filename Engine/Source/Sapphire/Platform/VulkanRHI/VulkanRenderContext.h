@@ -14,8 +14,12 @@ namespace Sapphire
 
     private:
         VkInstance m_Instance{};
+        VkDebugUtilsMessengerEXT m_DebugMessenger{};
+        VkSurfaceKHR m_Surface{};
+        VkPhysicalDevice m_PhysicalDevice{};
 
     private:
         void CreateInstance();
+        void CreateDevice();
     };
 }

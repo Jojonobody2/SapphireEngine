@@ -1,4 +1,5 @@
-[22:41:41] [info] ENGINE: Initializing Rendering Engine!
-[22:41:41] [info] ENGINE: Initializing Engine
-[22:41:42] [info] ENGINE: Shutting down Engine
-[22:41:42] [info] ENGINE: Shutting Rendering Engine down!
+[23:37:16] [info] ENGINE: Initializing Engine
+[23:37:16] [info] ENGINE: Initializing Rendering Engine!
+[23:37:16] [info] ENGINE: Using GPU: AMD Radeon RX 7900 XTX (RADV NAVI31)
+[23:37:17] [info] ENGINE: Shutting down Engine
+[23:37:17] [info] ENGINE: Shutting Rendering Engine down!

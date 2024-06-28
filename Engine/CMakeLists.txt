@@ -55,6 +55,12 @@ add_library(Engine
         Source/Sapphire/Renderer/Renderer.cpp
         Source/Sapphire/Renderer/Renderer.h
         Source/Sapphire/Platform/VulkanRHI/VulkanUtil.h
+        Source/Sapphire/Platform/VulkanRHI/VulkanRenderExtensions.cpp
+        Source/Sapphire/Platform/VulkanRHI/VulkanRenderExtensions.h
+        Source/Sapphire/Platform/VulkanRHI/VulkanRenderPlatform.h
+        Source/Sapphire/Platform/VulkanRHI/Linux/VulkanRenderPlatformLinux.cpp
+        Source/Sapphire/Platform/VulkanRHI/Windows/VulkanRenderPlatformWindows.cpp
+        Source/Sapphire/Platform/VulkanRHI/VulkanUtil.cpp
 )
 
 target_include_directories(Engine

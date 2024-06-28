@@ -75,8 +75,9 @@ namespace Sapphire
         virtual std::vector<MonitorMode> GetMonitorModes() = 0;
 
         virtual void SetWindowMode(WindowMode& WindowMode) = 0;
-
         virtual void SetEventCallback(SapphireEventCallback EventCallbackFn) = 0;
+
+        virtual void* GetNativeWindow() = 0;
 
         static SharedPtr<IWindow> CreateWindow(const std::string& Title, uint32_t Width, uint32_t Height);
     };
