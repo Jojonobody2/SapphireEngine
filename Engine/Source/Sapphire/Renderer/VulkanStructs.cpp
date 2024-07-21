@@ -133,7 +133,7 @@ namespace Sapphire
         VkRenderingAttachmentInfo AttachmentInfo{};
         AttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         AttachmentInfo.pNext = nullptr;
-        AttachmentInfo.clearValue.color = *ClearColor;
+        if (ClearColor) AttachmentInfo.clearValue.color = *ClearColor;
         AttachmentInfo.imageLayout = ImageLayout;
         AttachmentInfo.imageView = ImageView;
         AttachmentInfo.loadOp = ClearColor ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;

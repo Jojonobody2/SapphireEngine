@@ -33,8 +33,17 @@ namespace Sapphire
     class GraphicsPipeline
     {
     public:
+        GraphicsPipeline(const SharedPtr<RenderContext>& RenderContext, const SharedPtr<Shader>& VertexShader, const SharedPtr<Shader>& FragmentShader, VkFormat AttachmentFormat);
+        virtual ~GraphicsPipeline();
+
+        VkPipeline GetPipeline() { return m_GraphicsPipeline; }
+        VkPipelineLayout GetPipelineLayout() { return m_GraphicsPipelineLayout; }
 
     private:
+        VkPipelineLayout m_GraphicsPipelineLayout{};
+        VkPipeline m_GraphicsPipeline{};
 
+    private:
+        SharedPtr<RenderContext> m_RenderContext;
     };
 }

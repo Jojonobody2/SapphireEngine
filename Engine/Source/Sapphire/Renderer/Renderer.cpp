@@ -21,6 +21,11 @@ namespace Sapphire
         }
 
         InitImGui();
+
+        SharedPtr<Shader> VertexShader = CreateSharedPtr<Shader>("Resources/Shaders/Shader.vert.spv", m_RenderContext);
+        SharedPtr<Shader> FragmentShader = CreateSharedPtr<Shader>("Resources/Shaders/Shader.frag.spv", m_RenderContext);
+
+        m_GraphicsPipeline = CreateSharedPtr<GraphicsPipeline>(m_RenderContext, VertexShader, FragmentShader, m_Swapchain->GetFormat().format);
     }
 
     Renderer::~Renderer()
@@ -90,12 +95,42 @@ namespace Sapphire
 
         TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
+        VkClearColorValue ClearValue = { 1, 0, 1, 1 };
+        VkRenderingAttachmentInfo TriangleColorAttachmentInfo = ColorAttachmentInfo(m_Swapchain->GetImageView(ImageIndex),
+                                                                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &ClearValue);
+        VkRenderingInfo TriangleRenderingInfo = RenderingInfo(1, &TriangleColorAttachmentInfo);
+
+        vkCmdBeginRendering(Cmd, &TriangleRenderingInfo);
+
+        vkCmdBindPipeline(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
+
+        VkViewport Viewport{};
+        Viewport.x = 0.f;
+        Viewport.y = 0.f;
+        Viewport.width = (float)Application::Get().GetWindow().GetWidth();
+        Viewport.height = (float)Application::Get().GetWindow().GetHeight();
+        Viewport.minDepth = 0.f;
+        Viewport.maxDepth = 1.f;
+
+        vkCmdSetViewport(Cmd, 0, 1, &Viewport);
+
+        VkRect2D Scissor{};
+        Scissor.offset.x = 0;
+        Scissor.offset.y = 0;
+        Scissor.extent.width = Application::Get().GetWindow().GetWidth();
+        Scissor.extent.height = Application::Get().GetWindow().GetHeight();
+
+        vkCmdSetScissor(Cmd, 0, 1, &Scissor);
+
+        vkCmdDraw(Cmd, 3, 1, 0, 0);
+
+        vkCmdEndRendering(Cmd);
+
         ImGui_ImplVulkan_NewFrame();
         ImGui::Render();
 
-        VkClearColorValue ClearValue = { 1, 0, 1, 1 };
         VkRenderingAttachmentInfo ImGuiColorAttachmentInfo = ColorAttachmentInfo(m_Swapchain->GetImageView(ImageIndex),
-                                                                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &ClearValue);
+                                                                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         VkRenderingInfo ImGuiRenderingInfo = RenderingInfo(1, &ImGuiColorAttachmentInfo);
 
         vkCmdBeginRendering(Cmd, &ImGuiRenderingInfo);

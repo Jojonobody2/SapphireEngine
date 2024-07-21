@@ -12,6 +12,9 @@ namespace Sapphire
     void ImGuiLayer::OnAttach()
     {
         ImGui::CreateContext();
+
+        ImGuiIO& IO = ImGui::GetIO();
+        IO.Fonts->AddFontFromFileTTF("Resources/Fonts/JetBrains Mono.ttf", 24);
     }
 
     void ImGuiLayer::OnUpdate(double Delta)

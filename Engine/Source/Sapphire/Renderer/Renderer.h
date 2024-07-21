@@ -3,6 +3,7 @@
 #include "RenderContext.h"
 #include "Swapchain.h"
 #include "CommandList.h"
+#include "Pipeline.h"
 
 #include "Sapphire/Core/Base.h"
 
@@ -29,6 +30,7 @@ namespace Sapphire
         SharedPtr<RenderContext> m_RenderContext;
         SharedPtr<Swapchain> m_Swapchain;
         std::vector<SharedPtr<CommandList>> m_CommandLists;
+        SharedPtr<GraphicsPipeline> m_GraphicsPipeline{};
 
         VkDescriptorPool m_ImGuiPool{};
 

@@ -43,4 +43,138 @@ namespace Sapphire
     {
         vkDestroyShaderModule(m_RenderContext->GetDevice(), m_ShaderModule, nullptr);
     }
+
+    GraphicsPipeline::GraphicsPipeline(const SharedPtr<RenderContext>& RenderContext,
+                                       const SharedPtr<Shader>& VertexShader, const SharedPtr<Shader> & FragmentShader,
+                                       VkFormat AttachmentFormat)
+    {
+        m_RenderContext = RenderContext;
+
+        VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo{};
+        PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        PipelineLayoutCreateInfo.pNext = nullptr;
+        PipelineLayoutCreateInfo.flags = 0;
+        PipelineLayoutCreateInfo.setLayoutCount = 0;
+        PipelineLayoutCreateInfo.pSetLayouts = nullptr;
+        PipelineLayoutCreateInfo.pushConstantRangeCount = 0;
+        PipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+
+        VkCheck(vkCreatePipelineLayout(m_RenderContext->GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_GraphicsPipelineLayout));
+
+        VkPipelineShaderStageCreateInfo ShaderStages[] =
+        {
+            VertexShader->GetShaderStageInfo(),
+            FragmentShader->GetShaderStageInfo(),
+        };
+
+        VkPipelineVertexInputStateCreateInfo InputStateCreateInfo{};
+        InputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+        VkPipelineInputAssemblyStateCreateInfo InputAssemblyStateCreateInfo{};
+        InputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        InputAssemblyStateCreateInfo.pNext = nullptr;
+        InputAssemblyStateCreateInfo.flags = 0;
+        InputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        InputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+        VkPipelineViewportStateCreateInfo ViewportStateCreateInfo{};
+        ViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        ViewportStateCreateInfo.pNext = nullptr;
+        ViewportStateCreateInfo.flags = 0;
+        ViewportStateCreateInfo.viewportCount = 1;
+        ViewportStateCreateInfo.scissorCount = 1;
+
+        VkPipelineRasterizationStateCreateInfo RasterizationStateCreateInfo{};
+        RasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        RasterizationStateCreateInfo.pNext = nullptr;
+        RasterizationStateCreateInfo.flags = 0;
+        RasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+        RasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
+        RasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        RasterizationStateCreateInfo.lineWidth = 1.f;
+
+        VkPipelineMultisampleStateCreateInfo MultisampleStateCreateInfo{};
+        MultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        MultisampleStateCreateInfo.pNext = nullptr;
+        MultisampleStateCreateInfo.flags = 0;
+        MultisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+        MultisampleStateCreateInfo.sampleShadingEnable = VK_FALSE;
+        MultisampleStateCreateInfo.minSampleShading = 1.f;
+        MultisampleStateCreateInfo.pSampleMask = nullptr;
+        MultisampleStateCreateInfo.alphaToCoverageEnable = VK_FALSE;
+        MultisampleStateCreateInfo.alphaToOneEnable = VK_FALSE;
+
+        VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo{};
+        DepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        DepthStencilStateCreateInfo.pNext = nullptr;
+        DepthStencilStateCreateInfo.flags = 0;
+        DepthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
+        DepthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
+        DepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_NEVER;
+        DepthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
+        DepthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
+        DepthStencilStateCreateInfo.front = {};
+        DepthStencilStateCreateInfo.back = {};
+        DepthStencilStateCreateInfo.minDepthBounds = 0.f;
+        DepthStencilStateCreateInfo.maxDepthBounds = 1.f;
+
+        VkPipelineColorBlendAttachmentState ColorBlendAttachmentState{};
+        ColorBlendAttachmentState.blendEnable = VK_FALSE;
+        ColorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;;
+
+        VkPipelineColorBlendStateCreateInfo ColorBlendStateCreateInfo{};
+        ColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        ColorBlendStateCreateInfo.pNext = nullptr;
+        ColorBlendStateCreateInfo.flags = 0;
+        ColorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
+        ColorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
+        ColorBlendStateCreateInfo.attachmentCount = 1;
+        ColorBlendStateCreateInfo.pAttachments = &ColorBlendAttachmentState;
+
+        VkDynamicState DynamicStates[] =
+        {
+                VK_DYNAMIC_STATE_VIEWPORT,
+                VK_DYNAMIC_STATE_SCISSOR,
+        };
+
+        VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo{};
+        DynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        DynamicStateCreateInfo.pNext = nullptr;
+        DynamicStateCreateInfo.flags = 0;
+        DynamicStateCreateInfo.dynamicStateCount = 2;
+        DynamicStateCreateInfo.pDynamicStates = DynamicStates;
+
+        VkFormat ColorAttachmentFormat = AttachmentFormat;
+
+        VkPipelineRenderingCreateInfo RenderingCreateInfo{};
+        RenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+        RenderingCreateInfo.pNext = nullptr;
+        RenderingCreateInfo.colorAttachmentCount = 1;
+        RenderingCreateInfo.pColorAttachmentFormats = &ColorAttachmentFormat;
+        RenderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+
+        VkGraphicsPipelineCreateInfo GraphicsPipelineCreateInfo{};
+        GraphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        GraphicsPipelineCreateInfo.pNext = &RenderingCreateInfo;
+        GraphicsPipelineCreateInfo.flags = 0;
+        GraphicsPipelineCreateInfo.stageCount = 2;
+        GraphicsPipelineCreateInfo.pStages = ShaderStages;
+        GraphicsPipelineCreateInfo.pVertexInputState = &InputStateCreateInfo;
+        GraphicsPipelineCreateInfo.pInputAssemblyState = &InputAssemblyStateCreateInfo;
+        GraphicsPipelineCreateInfo.pViewportState = &ViewportStateCreateInfo;
+        GraphicsPipelineCreateInfo.pRasterizationState = &RasterizationStateCreateInfo;
+        GraphicsPipelineCreateInfo.pMultisampleState = &MultisampleStateCreateInfo;
+        GraphicsPipelineCreateInfo.pDepthStencilState = &DepthStencilStateCreateInfo;
+        GraphicsPipelineCreateInfo.pColorBlendState = &ColorBlendStateCreateInfo;
+        GraphicsPipelineCreateInfo.pDynamicState = &DynamicStateCreateInfo;
+        GraphicsPipelineCreateInfo.layout = m_GraphicsPipelineLayout;
+
+        VkCheck(vkCreateGraphicsPipelines(m_RenderContext->GetDevice(), VK_NULL_HANDLE, 1, &GraphicsPipelineCreateInfo, nullptr, &m_GraphicsPipeline));
+    }
+
+    GraphicsPipeline::~GraphicsPipeline()
+    {
+        vkDestroyPipeline(m_RenderContext->GetDevice(), m_GraphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(m_RenderContext->GetDevice(), m_GraphicsPipelineLayout, nullptr);
+    }
 }
