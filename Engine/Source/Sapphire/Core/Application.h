@@ -32,7 +32,6 @@ namespace Sapphire
         const std::string& GetName() { return m_Name; }
 
         IWindow& GetWindow() { return *m_Window; }
-        Renderer& GetRenderer() { return *m_Renderer; }
 
         static Application& Get() { return *s_Application; }
 
@@ -42,6 +41,9 @@ namespace Sapphire
 
         SharedPtr<IWindow> m_Window{};
         SharedPtr<Renderer> m_Renderer{};
+
+        double m_LastTime{};
+        double m_DeltaTime{};
 
         static Application* s_Application;
 

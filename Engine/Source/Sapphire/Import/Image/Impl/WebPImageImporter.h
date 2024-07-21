@@ -9,6 +9,6 @@ namespace Sapphire
     class WebPImageImporter
     {
     public:
-        static Image Import(const std::filesystem::path& ImagePath);
+        static BitmapImage Import(const std::filesystem::path& ImagePath);
     };
 }

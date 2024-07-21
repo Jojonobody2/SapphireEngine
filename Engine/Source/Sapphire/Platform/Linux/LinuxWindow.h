@@ -19,7 +19,10 @@ namespace Sapphire
         bool IsOpen() override;
 
         void SetTitle(const std::string& Title) override;
-        void SetIcon(Image& Image) override;
+        void SetIcon(BitmapImage& Image) override;
+
+        uint32_t GetWidth() override;
+        uint32_t GetHeight() override;
 
         std::vector<MonitorMode> GetMonitorModes() override;
 

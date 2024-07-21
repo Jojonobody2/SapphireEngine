@@ -6,7 +6,7 @@
 
 namespace Sapphire
 {
-    class VulkanRenderPlatform
+    class RenderPlatform
     {
     public:
         static std::vector<const char*> GetPlatformInstanceExtensions();

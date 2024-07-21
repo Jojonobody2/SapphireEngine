@@ -7,9 +7,9 @@
 
 namespace Sapphire
 {
-    Image WebPImageImporter::Import(const std::filesystem::path& ImagePath)
+    BitmapImage WebPImageImporter::Import(const std::filesystem::path& ImagePath)
     {
-        Image Image{};
+        BitmapImage Image{};
 
         BinaryFile File = BinaryFileImporter::Import(ImagePath);
 

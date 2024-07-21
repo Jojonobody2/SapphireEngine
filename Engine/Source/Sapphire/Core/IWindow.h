@@ -70,7 +70,10 @@ namespace Sapphire
         virtual bool IsOpen() = 0;
 
         virtual void SetTitle(const std::string& Name) = 0;
-        virtual void SetIcon(Image& Image) = 0;
+        virtual void SetIcon(BitmapImage& Image) = 0;
+
+        virtual uint32_t GetWidth() = 0;
+        virtual uint32_t GetHeight() = 0;
 
         virtual std::vector<MonitorMode> GetMonitorModes() = 0;
 

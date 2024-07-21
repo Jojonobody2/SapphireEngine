@@ -7,12 +7,10 @@
 
 namespace Sapphire
 {
-    Image ImageImporter::Import(const std::filesystem::path& ImagePath)
+    BitmapImage ImageImporter::Import(const std::filesystem::path& ImagePath)
     {
         std::string ImageType = ImagePath.extension().string();
         std::transform(ImageType.begin(), ImageType.end(), ImageType.begin(), tolower);
-
-        std::cout << ImageType << std::endl;
 
         if (ImageType == ".png" || ImageType == ".jpg" || ImageType == ".jpeg")
         {
@@ -24,7 +22,7 @@ namespace Sapphire
         }
 
         SAPPHIRE_ENGINE_ERROR("Image format: {} is not implemented!", ImageType);
-        return Image{};
+        return BitmapImage{};
     }
 
 }

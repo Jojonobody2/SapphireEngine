@@ -26,7 +26,5 @@ namespace Sapphire
 
     private:
         GLFWwindow* m_Window{};
-    };
-}
 
 #endif

@@ -16,6 +16,6 @@ namespace Sapphire
     public:
         virtual ~Event() = default;
 
-        virtual EventType GetEventType() const = 0;
+        [[nodiscard]] virtual EventType GetEventType() const = 0;
     };
 }

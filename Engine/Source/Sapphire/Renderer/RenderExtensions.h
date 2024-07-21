@@ -6,7 +6,7 @@
 
 namespace Sapphire
 {
-    class VulkanRenderExtensions
+    class RenderExtensions
     {
     public:
         static std::vector<const char*> GetRequiredInstanceExtensions();

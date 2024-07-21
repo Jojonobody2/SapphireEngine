@@ -8,6 +8,7 @@ set(GLFW_BUILD_WAYLAND FALSE)
 add_subdirectory(ThirdParty/glfw)
 add_subdirectory(ThirdParty/spdlog)
 add_subdirectory(ThirdParty/libwebp)
+add_subdirectory(ThirdParty/imgui)
 
 project(Engine)
 
@@ -48,27 +49,38 @@ add_library(Engine
         Source/Sapphire/Event/MouseEvent.h
         Source/Sapphire/Event/KeyEvent.h
         Source/Sapphire/Core/InputCodes.h
-        Source/Sapphire/RHI/IRenderContext.cpp
-        Source/Sapphire/RHI/IRenderContext.h
-        Source/Sapphire/Platform/VulkanRHI/VulkanRenderContext.cpp
-        Source/Sapphire/Platform/VulkanRHI/VulkanRenderContext.h
+        Source/Sapphire/Renderer/RenderContext.cpp
+        Source/Sapphire/Renderer/RenderContext.h
         Source/Sapphire/Renderer/Renderer.cpp
         Source/Sapphire/Renderer/Renderer.h
-        Source/Sapphire/Platform/VulkanRHI/VulkanUtil.h
-        Source/Sapphire/Platform/VulkanRHI/VulkanRenderExtensions.cpp
-        Source/Sapphire/Platform/VulkanRHI/VulkanRenderExtensions.h
-        Source/Sapphire/Platform/VulkanRHI/VulkanRenderPlatform.h
-        Source/Sapphire/Platform/VulkanRHI/Linux/VulkanRenderPlatformLinux.cpp
-        Source/Sapphire/Platform/VulkanRHI/Windows/VulkanRenderPlatformWindows.cpp
-        Source/Sapphire/Platform/VulkanRHI/VulkanUtil.cpp
+        Source/Sapphire/Renderer/VulkanUtil.h
+        Source/Sapphire/Renderer/RenderExtensions.cpp
+        Source/Sapphire/Renderer/RenderExtensions.h
+        Source/Sapphire/Renderer/RenderPlatform.h
+        Source/Sapphire/Renderer/Linux/VulkanRenderPlatformLinux.cpp
+        Source/Sapphire/Renderer/Windows/VulkanRenderPlatformWindows.cpp
+        Source/Sapphire/Renderer/VulkanUtil.cpp
+        Source/Sapphire/Renderer/Swapchain.cpp
+        Source/Sapphire/Renderer/Swapchain.h
+        Source/Sapphire/Renderer/VulkanStructs.h
+        Source/Sapphire/Renderer/VulkanStructs.cpp
+        Source/Sapphire/Renderer/CommandList.cpp
+        Source/Sapphire/Renderer/CommandList.h
+        Source/Sapphire/ImGui/ImGuiLayer.cpp
+        Source/Sapphire/ImGui/ImGuiLayer.h
+        Source/Sapphire/Core/Time.h
+        Source/Sapphire/Platform/Linux/LinuxTime.cpp
+        Source/Sapphire/Platform/Windows/WindowsTime.cpp
+        Source/Sapphire/Renderer/Pipeline.h
+        Source/Sapphire/Renderer/Pipeline.cpp
 )
 
 target_include_directories(Engine
         PRIVATE ThirdParty/glfw/include ThirdParty/stb ThirdParty/libwebp/src ${Vulkan_INCLUDE_DIRS}
-        PUBLIC ThirdParty/spdlog/include Source)
+        PUBLIC ThirdParty/spdlog/include ThirdParty/imgui Source)
 target_link_libraries(Engine
         PRIVATE vulkan glfw webp
-        PUBLIC spdlog)
+        PUBLIC spdlog imgui)
 
 if (OS STREQUAL "Windows")
     target_compile_definitions(Engine PUBLIC SAPPHIRE_WINDOWS)

@@ -16,3 +16,6 @@
 [submodule "Engine/ThirdParty/libwebp"]
 	path = Engine/ThirdParty/libwebp
 	url = https://github.com/webmproject/libwebp
+[submodule "Engine/ThirdParty/imgui"]
+	path = Engine/ThirdParty/imgui
+	url = https://github.com/Jojonobody2/imgui

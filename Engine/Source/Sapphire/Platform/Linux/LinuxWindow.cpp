@@ -134,7 +134,7 @@ namespace Sapphire
         }
     }
 
-    void LinuxWindow::SetIcon(Image& Image)
+    void LinuxWindow::SetIcon(BitmapImage& Image)
     {
         GLFWimage GLFWImage{};
         GLFWImage.width = (int32_t)Image.Width;
@@ -329,6 +329,22 @@ namespace Sapphire
             case GLFW_MOUSE_BUTTON_RIGHT:	return MouseCode::SM_RIGHT;
             default:						return MouseCode::SM_NONE;
         }
+    }
+
+    uint32_t LinuxWindow::GetWidth()
+    {
+        int32_t Width, Height;
+        glfwGetWindowSize(m_Window, &Width, &Height);
+
+        return Width;
+    }
+
+    uint32_t LinuxWindow::GetHeight()
+    {
+        int32_t Width, Height;
+        glfwGetWindowSize(m_Window, &Width, &Height);
+
+        return Height;
     }
 }
 

@@ -5,9 +5,9 @@
 
 namespace Sapphire
 {
-    Image STBImageImporter::Import(const std::filesystem::path& ImagePath)
+    BitmapImage STBImageImporter::Import(const std::filesystem::path& ImagePath)
     {
-        Image Image{};
+        BitmapImage Image{};
 
         int32_t Width{}, Height{}, Channels{};
 

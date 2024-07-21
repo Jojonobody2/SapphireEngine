@@ -1,21 +1,25 @@
-#include "VulkanRenderContext.h"
+#include "RenderContext.h"
 
-#include "VulkanRenderExtensions.h"
-#include "VulkanRenderPlatform.h"
+#include "RenderExtensions.h"
+#include "RenderPlatform.h"
 #include "VulkanUtil.h"
 
 #include "Sapphire/Core/Application.h"
 
+#include <set>
+
 namespace Sapphire
 {
-    VulkanRenderContext::VulkanRenderContext()
+    RenderContext::RenderContext()
     {
         CreateInstance();
         CreateDevice();
     }
 
-    VulkanRenderContext::~VulkanRenderContext()
+    RenderContext::~RenderContext()
     {
+        vkDestroyDevice(m_Device, nullptr);
+
         #ifdef SAPPHIRE_RENDER_DEBUG
         EXT::vkDestroyDebugUtilsMessenger(m_Instance, m_DebugMessenger, nullptr);
         #endif
@@ -23,7 +27,7 @@ namespace Sapphire
         vkDestroyInstance(m_Instance, nullptr);
     }
 
-    void VulkanRenderContext::CreateInstance()
+    void RenderContext::CreateInstance()
     {
         VkApplicationInfo AppInfo{};
         AppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -46,7 +50,7 @@ namespace Sapphire
         }
 
         //returns OS required extensions for Vulkan surface
-        auto InstanceExtensions = VulkanRenderExtensions::GetRequiredInstanceExtensions();
+        auto InstanceExtensions = RenderExtensions::GetRequiredInstanceExtensions();
         #ifdef SAPPHIRE_RENDER_DEBUG
         InstanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         #endif
@@ -68,23 +72,23 @@ namespace Sapphire
         InstanceCreateInfo.ppEnabledExtensionNames = InstanceExtensions.data();
 
         VkCheck(vkCreateInstance(&InstanceCreateInfo, nullptr, &m_Instance));
-        VulkanRenderExtensions::LoadInstance(m_Instance);
+        RenderExtensions::LoadInstance(m_Instance);
 
         #ifdef SAPPHIRE_RENDER_DEBUG
         VkDebugUtilsMessengerCreateInfoEXT DebugUtilsMessengerCreateInfo{};
         DebugUtilsMessengerCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         DebugUtilsMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
         DebugUtilsMessengerCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        DebugUtilsMessengerCreateInfo.pfnUserCallback = VulkanRenderExtensions::DebugCallback;
+        DebugUtilsMessengerCreateInfo.pfnUserCallback = RenderExtensions::DebugCallback;
         DebugUtilsMessengerCreateInfo.pUserData = nullptr;
 
         VkCheck(EXT::vkCreateDebugUtilsMessenger(m_Instance, &DebugUtilsMessengerCreateInfo, nullptr, &m_DebugMessenger));
         #endif
 
-        m_Surface = VulkanRenderPlatform::CreateSurface(m_Instance);
+        m_Surface = RenderPlatform::CreateSurface(m_Instance);
     }
 
-    void VulkanRenderContext::CreateDevice()
+    void RenderContext::CreateDevice()
     {
         uint32_t DeviceCount{};
         VkCheck(vkEnumeratePhysicalDevices(m_Instance, &DeviceCount, nullptr));
@@ -99,7 +103,7 @@ namespace Sapphire
 
             if (DeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
             {
-                m_PhysicalDevice == PhysicalDevice;
+                m_PhysicalDevice = PhysicalDevice;
                 break;
             }
         }
@@ -115,5 +119,67 @@ namespace Sapphire
         SAPPHIRE_ENGINE_INFO("Using GPU: {}", DeviceProperties.deviceName);
 
         QueueFamilyIndices QueueFamilies = SelectQueueFamilies(m_PhysicalDevice, m_Surface);
+
+        std::set<uint32_t> UniqueQueueFamilies = { QueueFamilies.GraphicsFamily.value(), QueueFamilies.PresentFamily.value() };
+
+        std::vector<VkDeviceQueueCreateInfo> DeviceQueueCreateInfos{};
+        float QueuePriority = 1.f;
+
+        for (uint32_t QueueFamily : UniqueQueueFamilies)
+        {
+            VkDeviceQueueCreateInfo QueueCreateInfo{};
+            QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+            QueueCreateInfo.queueFamilyIndex = QueueFamily;
+            QueueCreateInfo.queueCount = 1;
+            QueueCreateInfo.pQueuePriorities = &QueuePriority;
+
+            DeviceQueueCreateInfos.push_back(QueueCreateInfo);
+        }
+
+        VkPhysicalDeviceFeatures DeviceFeatures{};
+
+        std::vector<const char*> DeviceLayers{};
+        #ifdef SAPPHIRE_RENDER_DEBUG
+        DeviceLayers.push_back("VK_LAYER_KHRONOS_validation");
+        #endif
+
+        if (!CheckDeviceLayerSupport(m_PhysicalDevice, DeviceLayers))
+        {
+            SAPPHIRE_ENGINE_ERROR("Required Vulkan layer not available!");
+            return;
+        }
+
+        std::vector<const char*> DeviceExtensions{};
+        DeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+        if (!CheckDeviceExtensionsSupport(m_PhysicalDevice, DeviceExtensions))
+        {
+            SAPPHIRE_ENGINE_ERROR("Required Vulkan extension not available!");
+            return;
+        }
+
+        VkPhysicalDeviceVulkan13Features Vulkan13Features{};
+        Vulkan13Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+        Vulkan13Features.synchronization2 = true;
+        Vulkan13Features.dynamicRendering = true;
+
+        VkDeviceCreateInfo DeviceCreateInfo{};
+        DeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        DeviceCreateInfo.pNext = &Vulkan13Features;
+        DeviceCreateInfo.queueCreateInfoCount = (uint32_t)DeviceQueueCreateInfos.size();
+        DeviceCreateInfo.pQueueCreateInfos = DeviceQueueCreateInfos.data();
+        DeviceCreateInfo.pEnabledFeatures = &DeviceFeatures;
+        DeviceCreateInfo.enabledExtensionCount = (uint32_t)DeviceExtensions.size();
+        DeviceCreateInfo.ppEnabledExtensionNames = DeviceExtensions.data();
+        DeviceCreateInfo.enabledLayerCount = (uint32_t)DeviceLayers.size();
+        DeviceCreateInfo.ppEnabledLayerNames = DeviceLayers.data();
+
+        VkCheck(vkCreateDevice(m_PhysicalDevice, &DeviceCreateInfo, nullptr, &m_Device));
+
+        m_GraphicsQueue.Family = QueueFamilies.GraphicsFamily.value();
+        m_PresentQueue.Family = QueueFamilies.PresentFamily.value();
+
+        vkGetDeviceQueue(m_Device, m_GraphicsQueue.Family, 0, &m_GraphicsQueue.DeviceQueue);
+        vkGetDeviceQueue(m_Device, m_PresentQueue.Family, 0, &m_PresentQueue.DeviceQueue);
     }
 }

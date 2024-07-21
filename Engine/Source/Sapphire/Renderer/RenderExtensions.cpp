@@ -1,21 +1,21 @@
-#include "VulkanRenderExtensions.h"
+#include "RenderExtensions.h"
 
-#include "VulkanRenderPlatform.h"
+#include "RenderPlatform.h"
 #include "Sapphire/Logging/Logger.h"
 
 namespace Sapphire
 {
-    void VulkanRenderExtensions::LoadInstance(VkInstance Instance)
+    void RenderExtensions::LoadInstance(VkInstance Instance)
     {
         EXT::vkCreateDebugUtilsMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(Instance, "vkCreateDebugUtilsMessengerEXT"));
         EXT::vkDestroyDebugUtilsMessenger = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(Instance, "vkDestroyDebugUtilsMessengerEXT"));
     }
 
-    std::vector<const char*> VulkanRenderExtensions::GetRequiredInstanceExtensions()
+    std::vector<const char*> RenderExtensions::GetRequiredInstanceExtensions()
     {
         std::vector<const char*> InstanceExtensions{};
 
-        const auto PlatformExtensions = VulkanRenderPlatform::GetPlatformInstanceExtensions();
+        const auto PlatformExtensions = RenderPlatform::GetPlatformInstanceExtensions();
         InstanceExtensions.insert(InstanceExtensions.begin(), PlatformExtensions.begin(), PlatformExtensions.end());
 
         #ifdef SAPPHIRE_RENDER_DEBUG
@@ -26,10 +26,10 @@ namespace Sapphire
     }
 
     #ifdef SAPPHIRE_RENDER_DEBUG
-    VkBool32 VulkanRenderExtensions::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
-                                                   VkDebugUtilsMessageTypeFlagsEXT MessageType,
-                                                   const VkDebugUtilsMessengerCallbackDataEXT* PCallbackData,
-                                                   void* PUserData)
+    VkBool32 RenderExtensions::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity,
+                                             VkDebugUtilsMessageTypeFlagsEXT MessageType,
+                                             const VkDebugUtilsMessengerCallbackDataEXT* PCallbackData,
+                                             void* PUserData)
     {
         const char* Message = PCallbackData->pMessage;
 

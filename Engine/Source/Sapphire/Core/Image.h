@@ -5,7 +5,7 @@
 
 namespace Sapphire
 {
-    class Image
+    class BitmapImage
     {
     public:
         uint32_t Width, Height;

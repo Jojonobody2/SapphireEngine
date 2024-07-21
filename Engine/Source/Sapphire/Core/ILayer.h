@@ -12,7 +12,7 @@ namespace Sapphire
     public:
         virtual ~ILayer() = default;
         virtual void OnAttach() {};
-        virtual void OnUpdate() {};
+        virtual void OnUpdate(double Delta) {};
         virtual void OnEvent(Event& Event) {};
         virtual void OnDetach() {};
     };
