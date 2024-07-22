@@ -76,11 +76,13 @@ add_library(Engine
         Source/Sapphire/Renderer/GPUResources.h
         Source/Sapphire/Renderer/GPUMemory.cpp
         Source/Sapphire/Renderer/GPUMemory.h
+        Source/Sapphire/Import/Model/ModelImporter.cpp
+        Source/Sapphire/Import/Model/ModelImporter.h
 )
 
 target_include_directories(Engine
         PRIVATE ThirdParty/glfw/include ThirdParty/stb ThirdParty/libwebp/src ThirdParty/VulkanMemoryAllocator ${Vulkan_INCLUDE_DIRS}
-        PUBLIC ThirdParty/spdlog/include ThirdParty/imgui Source)
+        PUBLIC ThirdParty/spdlog/include ThirdParty/imgui ThirdParty/glm Source)
 target_link_libraries(Engine
         PRIVATE vulkan glfw webp
         PUBLIC spdlog imgui)

@@ -6,6 +6,11 @@
 
 #include "Sapphire/Logging/Logger.h"
 
+#include <glm/glm.hpp>
+
+#define GLM_DEPTH_ZERO_TO_ONE
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace Sapphire
 {
     Renderer::Renderer()
@@ -42,23 +47,55 @@ namespace Sapphire
         {
             Vertex Vertices[] =
             {
-                { 1.f, 1.f, 0.0f },
-                {-1.f, 1.f, 0.0f },
-                { 0.f,-1.f, 0.0f },
+                    {-1.0f, -1.0f, -1.0f},  // 0: Bottom-left-back
+                    { 1.0f, -1.0f, -1.0f},  // 1: Bottom-right-back
+                    { 1.0f,  1.0f, -1.0f},  // 2: Top-right-back
+                    {-1.0f,  1.0f, -1.0f},  // 3: Top-left-back
+                    {-1.0f, -1.0f,  1.0f},  // 4: Bottom-left-front
+                    { 1.0f, -1.0f,  1.0f},  // 5: Bottom-right-front
+                    { 1.0f,  1.0f,  1.0f},  // 6: Top-right-front
+                    {-1.0f,  1.0f,  1.0f}   // 7: Top-left-front // top top-left
+            };
+
+            uint32_t Indices[] =
+            {
+                    // Back face
+                    0, 1, 2,
+                    0, 2, 3,
+                    // Front face
+                    4, 5, 6,
+                    4, 6, 7,
+                    // Left face
+                    0, 4, 7,
+                    0, 7, 3,
+                    // Right face
+                    1, 5, 6,
+                    1, 6, 2,
+                    // Bottom face
+                    0, 1, 5,
+                    0, 5, 4,
+                    // Top face
+                    3, 2, 6,
+                    3, 6, 7
             };
 
             GPUBuffer StagingBuffer = m_GPUMemoryAllocator->AllocateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY,
-                sizeof(Vertices));
+                sizeof(Vertices) + sizeof(Indices));
             m_GPUMemoryAllocator->CopyDataToHost(StagingBuffer, Vertices, sizeof(Vertices));
+            m_GPUMemoryAllocator->CopyDataToHost(StagingBuffer, Indices, sizeof(Indices), sizeof(Vertices));
 
             m_VertexBuffer = m_GPUMemoryAllocator->AllocateBufferAddressable(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(Vertices));
+                    VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(Vertices));
+
+            m_IndexBuffer = m_GPUMemoryAllocator->AllocateBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                    VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(Indices));
 
             SharedPtr<CommandList> UploadCmdList = CreateSharedPtr<CommandList>(m_RenderContext);
 
             UploadCmdList->Wait();
             VkCommandBuffer Cmd = UploadCmdList->Begin();
             m_GPUMemoryAllocator->CopyBufferToBuffer(Cmd, StagingBuffer, m_VertexBuffer.Buffer);
+            m_GPUMemoryAllocator->CopyBufferToBuffer(Cmd, StagingBuffer, m_IndexBuffer, sizeof(Vertices));
             UploadCmdList->Submit(nullptr);
             UploadCmdList->Wait();
 
@@ -70,6 +107,7 @@ namespace Sapphire
     {
         VkCheck(vkDeviceWaitIdle(m_RenderContext->GetDevice()));
 
+        m_GPUMemoryAllocator->DestroyBuffer(m_IndexBuffer);
         m_GPUMemoryAllocator->DestroyBuffer(m_VertexBuffer);
 
         m_GPUMemoryAllocator->DestroyImage(m_RenderImage);
@@ -161,11 +199,31 @@ namespace Sapphire
         Scissor.extent.height = Application::Get().GetWindow().GetHeight();
 
         vkCmdSetScissor(Cmd, 0, 1, &Scissor);
-        
-        vkCmdPushConstants(Cmd, m_GraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress),
-            &m_VertexBuffer.BufferAddress);
 
-        vkCmdDraw(Cmd, 3, 1, 0, 0);
+        struct PushConstants
+        {
+            glm::mat4 MVPMat;
+            VkDeviceAddress DeviceAddr;
+        } Consts{};
+
+        Consts.DeviceAddr = m_VertexBuffer.BufferAddress;
+
+        auto Proj = glm::perspective(glm::radians(45.0f), 1280.f / (float) 720.f, 0.1f, 10.0f);
+        //Vulkan's y-Axis is flipped compared to OpenGL based GLM
+        Proj[1][1] *= -1;
+
+        auto Model = glm::translate(glm::mat4(1.f), glm::vec3(-1, -1, -1));
+        Model = glm::rotate(Model, 1 * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        auto View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        Consts.MVPMat = Proj * View * Model;
+
+        vkCmdPushConstants(Cmd, m_GraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants),
+            &Consts);
+
+        vkCmdBindIndexBuffer(Cmd, m_IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(Cmd, 36, 1, 0, 0, 0);
 
         vkCmdEndRendering(Cmd);
 

@@ -1,28 +1,29 @@
 #version 450
 #extension GL_EXT_buffer_reference : require
 
-layout (location = 0) out vec3 outColor;
+layout (location = 0) out vec3 oColor;
 
-struct Vertex {
-	vec3 position;
+struct Vertex
+{
+	vec3 Pos;
 }; 
 
-layout(buffer_reference, std430) readonly buffer VertexBuffer{ 
-	Vertex vertices[];
+layout(buffer_reference, std430) readonly buffer VertexBuffer
+{
+	Vertex Vertices[];
 };
 
-//push constants block
+
 layout( push_constant ) uniform constants
 {
-	VertexBuffer vertexBuffer;
+	mat4 MVPMat;
+	VertexBuffer pVertexBuffer;
 } PushConstants;
 
 void main() 
 {	
-	//load vertex data from device adress
-	Vertex v = PushConstants.vertexBuffer.vertices[gl_VertexIndex];
+	Vertex V = PushConstants.pVertexBuffer.Vertices[gl_VertexIndex];
+	gl_Position = PushConstants.MVPMat * vec4(V.Pos, 1.0f);
 
-	//output data
-	gl_Position = vec4(v.position, 1.0f);
-	outColor = vec3(1, 1, 1);
+	oColor = vec3(0.3215686274509804f, 0.66862745098039217f, 0.2784313725490196f);
 }

@@ -41,7 +41,9 @@ namespace Sapphire
         SharedPtr<GPUMemoryAllocator> m_GPUMemoryAllocator{};
 
         GPUImage m_RenderImage{};
+
         GPUBufferAddressable m_VertexBuffer{};
+        GPUBuffer m_IndexBuffer{};
 
         VkDescriptorPool m_ImGuiPool{};
 

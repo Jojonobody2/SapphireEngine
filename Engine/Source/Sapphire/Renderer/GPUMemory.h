@@ -25,8 +25,9 @@ namespace Sapphire
         void DestroyBuffer(const GPUBuffer& Buffer);
         void DestroyBuffer(const GPUBufferAddressable& Buffer);
 
-        void CopyDataToHost(const GPUBuffer& Buffer, void* pData, size_t DataSize);
-        void CopyBufferToBuffer(VkCommandBuffer Cmd, const GPUBuffer& Src, const GPUBuffer& Dst);
+        void CopyDataToHost(const GPUBuffer& Buffer, void* pData, size_t DataSize, size_t Offset = 0);
+        static void CopyBufferToBuffer(VkCommandBuffer Cmd, const GPUBuffer& Src, const GPUBuffer& Dst, size_t SrcOffset = 0,
+                                size_t DstOffset = 0);
 
     private:
         VmaAllocator m_Allocator{};

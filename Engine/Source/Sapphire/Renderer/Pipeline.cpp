@@ -5,6 +5,8 @@
 
 #include "Sapphire/Import/File/BinaryFileImporter.h"
 
+#include <glm/glm.hpp>
+
 namespace Sapphire
 {
     Shader::Shader(const std::filesystem::path& ShaderPath, const SharedPtr<RenderContext>& RenderContext)
@@ -50,7 +52,7 @@ namespace Sapphire
 
         VkPushConstantRange PushConstants{};
         PushConstants.offset = 0;
-        PushConstants.size = sizeof(VkDeviceAddress);
+        PushConstants.size = 72;
         PushConstants.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
         VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo{};

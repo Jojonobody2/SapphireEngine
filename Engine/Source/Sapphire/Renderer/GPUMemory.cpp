@@ -1,7 +1,7 @@
 #include "GPUMemory.h"
 
 #define VMA_IMPLEMENTATION
-#include "../../ThirdParty/VulkanMemoryAllocator/include/vk_mem_alloc.h"
+#include <vma/vk_mem_alloc.h>
 
 #include "VulkanUtil.h"
 #include "VulkanStructs.h"
@@ -122,20 +122,21 @@ namespace Sapphire
         vmaDestroyBuffer(m_Allocator, Buffer.Buffer.Buffer, Buffer.Buffer.BufferAllocation);
     }
 
-    void GPUMemoryAllocator::CopyDataToHost(const GPUBuffer& Buffer, void* pData, size_t DataSize)
+    void GPUMemoryAllocator::CopyDataToHost(const GPUBuffer& Buffer, void* pData, size_t DataSize, size_t Offset)
     {
         void* pMappedData;
         vmaMapMemory(m_Allocator, Buffer.BufferAllocation, &pMappedData);
-        memcpy(pMappedData, pData, DataSize);
+        memcpy((char*)pMappedData + Offset, pData, DataSize);
         vmaUnmapMemory(m_Allocator, Buffer.BufferAllocation);
     }
 
-    void GPUMemoryAllocator::CopyBufferToBuffer(VkCommandBuffer Cmd, const GPUBuffer& Src, const GPUBuffer& Dst)
+    void GPUMemoryAllocator::CopyBufferToBuffer(VkCommandBuffer Cmd, const GPUBuffer& Src, const GPUBuffer& Dst, size_t SrcOffset,
+                                                size_t DstOffset)
     {
         VkBufferCopy BufferCopy{};
-        BufferCopy.srcOffset = 0;
-        BufferCopy.dstOffset = 0;
-        BufferCopy.size = Src.BufferSize;
+        BufferCopy.srcOffset = SrcOffset;
+        BufferCopy.dstOffset = DstOffset;
+        BufferCopy.size = Dst.BufferSize;
 
         vkCmdCopyBuffer(Cmd, Src.Buffer, Dst.Buffer, 1, &BufferCopy);
     }
