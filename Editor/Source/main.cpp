@@ -8,8 +8,8 @@ public:
     void OnAttach() override
     {
         Sapphire::WindowModeWindowed WM{};
-        WM.Width = 1920;
-        WM.Height = 1080;
+        WM.Width = 1280;
+        WM.Height = 720;
 
         Sapphire::Application::Get().GetWindow().SetWindowMode(WM);
     }

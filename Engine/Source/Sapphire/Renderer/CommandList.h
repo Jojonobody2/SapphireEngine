@@ -16,7 +16,7 @@ namespace Sapphire
 
         void Wait();
         VkCommandBuffer Begin();
-        void Submit(VkSemaphore WaitSemaphore);
+        void Submit(VkSemaphore WaitSemaphore = nullptr);
 
     private:
         VkCommandPool m_CommandPool{};

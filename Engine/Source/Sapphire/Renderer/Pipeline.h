@@ -30,10 +30,19 @@ namespace Sapphire
         SharedPtr<RenderContext> m_RenderContext{};
     };
 
+    struct GraphicsPipelineInfo
+    {
+        SharedPtr<Shader> VertexShader;
+        SharedPtr<Shader> FragmentShader;
+        uint32_t ColorAttachmentCount;
+        VkFormat* pColorAttachments;
+        bool Wireframe = false;
+    };
+
     class GraphicsPipeline
     {
     public:
-        GraphicsPipeline(const SharedPtr<RenderContext>& RenderContext, const SharedPtr<Shader>& VertexShader, const SharedPtr<Shader>& FragmentShader, VkFormat AttachmentFormat);
+        GraphicsPipeline(const SharedPtr<RenderContext>& RenderContext, const GraphicsPipelineInfo& GraphicsPipelineInfo);
         virtual ~GraphicsPipeline();
 
         VkPipeline GetPipeline() { return m_GraphicsPipeline; }

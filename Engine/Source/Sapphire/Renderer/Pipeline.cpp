@@ -44,11 +44,14 @@ namespace Sapphire
         vkDestroyShaderModule(m_RenderContext->GetDevice(), m_ShaderModule, nullptr);
     }
 
-    GraphicsPipeline::GraphicsPipeline(const SharedPtr<RenderContext>& RenderContext,
-                                       const SharedPtr<Shader>& VertexShader, const SharedPtr<Shader> & FragmentShader,
-                                       VkFormat AttachmentFormat)
+    GraphicsPipeline::GraphicsPipeline(const SharedPtr<RenderContext>& RenderContext, const GraphicsPipelineInfo& GraphicsPipelineInfo)
     {
         m_RenderContext = RenderContext;
+
+        VkPushConstantRange PushConstants{};
+        PushConstants.offset = 0;
+        PushConstants.size = sizeof(VkDeviceAddress);
+        PushConstants.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
         VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo{};
         PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -56,15 +59,15 @@ namespace Sapphire
         PipelineLayoutCreateInfo.flags = 0;
         PipelineLayoutCreateInfo.setLayoutCount = 0;
         PipelineLayoutCreateInfo.pSetLayouts = nullptr;
-        PipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-        PipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
+        PipelineLayoutCreateInfo.pushConstantRangeCount = 1;
+        PipelineLayoutCreateInfo.pPushConstantRanges = &PushConstants;
 
         VkCheck(vkCreatePipelineLayout(m_RenderContext->GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_GraphicsPipelineLayout));
 
         VkPipelineShaderStageCreateInfo ShaderStages[] =
         {
-            VertexShader->GetShaderStageInfo(),
-            FragmentShader->GetShaderStageInfo(),
+            GraphicsPipelineInfo.VertexShader->GetShaderStageInfo(),
+            GraphicsPipelineInfo.FragmentShader->GetShaderStageInfo(),
         };
 
         VkPipelineVertexInputStateCreateInfo InputStateCreateInfo{};
@@ -88,7 +91,7 @@ namespace Sapphire
         RasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         RasterizationStateCreateInfo.pNext = nullptr;
         RasterizationStateCreateInfo.flags = 0;
-        RasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+        RasterizationStateCreateInfo.polygonMode = GraphicsPipelineInfo.Wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
         RasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
         RasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
         RasterizationStateCreateInfo.lineWidth = 1.f;
@@ -144,13 +147,11 @@ namespace Sapphire
         DynamicStateCreateInfo.dynamicStateCount = 2;
         DynamicStateCreateInfo.pDynamicStates = DynamicStates;
 
-        VkFormat ColorAttachmentFormat = AttachmentFormat;
-
         VkPipelineRenderingCreateInfo RenderingCreateInfo{};
         RenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         RenderingCreateInfo.pNext = nullptr;
-        RenderingCreateInfo.colorAttachmentCount = 1;
-        RenderingCreateInfo.pColorAttachmentFormats = &ColorAttachmentFormat;
+        RenderingCreateInfo.colorAttachmentCount = GraphicsPipelineInfo.ColorAttachmentCount;
+        RenderingCreateInfo.pColorAttachmentFormats = GraphicsPipelineInfo.pColorAttachments;
         RenderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
 
         VkGraphicsPipelineCreateInfo GraphicsPipelineCreateInfo{};

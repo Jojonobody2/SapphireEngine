@@ -158,8 +158,13 @@ namespace Sapphire
             return;
         }
 
+        VkPhysicalDeviceVulkan12Features Vulkan12Features{};
+        Vulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        Vulkan12Features.bufferDeviceAddress = true;
+
         VkPhysicalDeviceVulkan13Features Vulkan13Features{};
         Vulkan13Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+        Vulkan13Features.pNext = &Vulkan12Features;
         Vulkan13Features.synchronization2 = true;
         Vulkan13Features.dynamicRendering = true;
 

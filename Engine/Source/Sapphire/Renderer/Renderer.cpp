@@ -20,17 +20,59 @@ namespace Sapphire
             m_CommandLists.push_back(CreateSharedPtr<CommandList>(m_RenderContext));
         }
 
+        m_GPUMemoryAllocator = CreateSharedPtr<GPUMemoryAllocator>(m_RenderContext);
+
+        m_RenderImage = m_GPUMemoryAllocator->AllocateImage(m_Swapchain->GetExtent(), VK_FORMAT_R16G16B16A16_SFLOAT,
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
+
         InitImGui();
 
         SharedPtr<Shader> VertexShader = CreateSharedPtr<Shader>("Resources/Shaders/Shader.vert.spv", m_RenderContext);
         SharedPtr<Shader> FragmentShader = CreateSharedPtr<Shader>("Resources/Shaders/Shader.frag.spv", m_RenderContext);
 
-        m_GraphicsPipeline = CreateSharedPtr<GraphicsPipeline>(m_RenderContext, VertexShader, FragmentShader, m_Swapchain->GetFormat().format);
+        GraphicsPipelineInfo TrianglePipelineInfo{};
+        TrianglePipelineInfo.VertexShader = VertexShader;
+        TrianglePipelineInfo.FragmentShader = FragmentShader;
+        TrianglePipelineInfo.ColorAttachmentCount = 1;
+        TrianglePipelineInfo.pColorAttachments = &m_RenderImage.ImageFormat;
+        TrianglePipelineInfo.Wireframe = false;
+
+        m_GraphicsPipeline = CreateSharedPtr<GraphicsPipeline>(m_RenderContext, TrianglePipelineInfo);
+
+        {
+            Vertex Vertices[] =
+            {
+                { 1.f, 1.f, 0.0f },
+                {-1.f, 1.f, 0.0f },
+                { 0.f,-1.f, 0.0f },
+            };
+
+            GPUBuffer StagingBuffer = m_GPUMemoryAllocator->AllocateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY,
+                sizeof(Vertices));
+            m_GPUMemoryAllocator->CopyDataToHost(StagingBuffer, Vertices, sizeof(Vertices));
+
+            m_VertexBuffer = m_GPUMemoryAllocator->AllocateBufferAddressable(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(Vertices));
+
+            SharedPtr<CommandList> UploadCmdList = CreateSharedPtr<CommandList>(m_RenderContext);
+
+            UploadCmdList->Wait();
+            VkCommandBuffer Cmd = UploadCmdList->Begin();
+            m_GPUMemoryAllocator->CopyBufferToBuffer(Cmd, StagingBuffer, m_VertexBuffer.Buffer);
+            UploadCmdList->Submit(nullptr);
+            UploadCmdList->Wait();
+
+            m_GPUMemoryAllocator->DestroyBuffer(StagingBuffer);
+        }
     }
 
     Renderer::~Renderer()
     {
         VkCheck(vkDeviceWaitIdle(m_RenderContext->GetDevice()));
+
+        m_GPUMemoryAllocator->DestroyBuffer(m_VertexBuffer);
+
+        m_GPUMemoryAllocator->DestroyImage(m_RenderImage);
 
         ImGui_ImplVulkan_Shutdown();
         vkDestroyDescriptorPool(m_RenderContext->GetDevice(), m_ImGuiPool, nullptr);
@@ -64,8 +106,6 @@ namespace Sapphire
         VkCheck(vkCreateDescriptorPool(m_RenderContext->GetDevice(), &DescriptorPoolCreateInfo,
                                        nullptr, &m_ImGuiPool));
 
-        VkFormat SurfaceFormat = m_Swapchain->GetFormat().format;
-
         ImGui_ImplVulkan_InitInfo ImGuiInitInfo{};
         ImGuiInitInfo.Instance = m_RenderContext->GetInstance();
         ImGuiInitInfo.PhysicalDevice = m_RenderContext->GetPhysicalDevice();
@@ -77,7 +117,7 @@ namespace Sapphire
         ImGuiInitInfo.UseDynamicRendering = true;
         ImGuiInitInfo.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         ImGuiInitInfo.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
-        ImGuiInitInfo.PipelineRenderingCreateInfo.pColorAttachmentFormats = &SurfaceFormat;
+        ImGuiInitInfo.PipelineRenderingCreateInfo.pColorAttachmentFormats = &m_RenderImage.ImageFormat;
         ImGuiInitInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
         ImGui_ImplVulkan_Init(&ImGuiInitInfo);
@@ -93,10 +133,10 @@ namespace Sapphire
 
         VkCommandBuffer Cmd = m_CommandLists[FrameIndex]->Begin();
 
-        TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
         VkClearColorValue ClearValue = { 1, 0, 1, 1 };
-        VkRenderingAttachmentInfo TriangleColorAttachmentInfo = ColorAttachmentInfo(m_Swapchain->GetImageView(ImageIndex),
+        VkRenderingAttachmentInfo TriangleColorAttachmentInfo = ColorAttachmentInfo(m_RenderImage.ImageView,
                                                                                  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &ClearValue);
         VkRenderingInfo TriangleRenderingInfo = RenderingInfo(1, &TriangleColorAttachmentInfo);
 
@@ -121,6 +161,9 @@ namespace Sapphire
         Scissor.extent.height = Application::Get().GetWindow().GetHeight();
 
         vkCmdSetScissor(Cmd, 0, 1, &Scissor);
+        
+        vkCmdPushConstants(Cmd, m_GraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress),
+            &m_VertexBuffer.BufferAddress);
 
         vkCmdDraw(Cmd, 3, 1, 0, 0);
 
@@ -129,7 +172,7 @@ namespace Sapphire
         ImGui_ImplVulkan_NewFrame();
         ImGui::Render();
 
-        VkRenderingAttachmentInfo ImGuiColorAttachmentInfo = ColorAttachmentInfo(m_Swapchain->GetImageView(ImageIndex),
+        VkRenderingAttachmentInfo ImGuiColorAttachmentInfo = ColorAttachmentInfo(m_RenderImage.ImageView,
                                                                                  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
         VkRenderingInfo ImGuiRenderingInfo = RenderingInfo(1, &ImGuiColorAttachmentInfo);
 
@@ -137,7 +180,12 @@ namespace Sapphire
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), Cmd);
         vkCmdEndRendering(Cmd);
 
-        TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+        TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+        BlitImage(Cmd, m_RenderImage, { .Image = m_Swapchain->GetImage(ImageIndex), .ImageFormat = m_Swapchain->GetFormat().format, .ImageSize = m_Swapchain->GetExtent() });
+
+        TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
         m_CommandLists[FrameIndex]->Submit(m_Swapchain->GetSemaphore(FrameIndex));
         m_Swapchain->Present(m_CommandLists[FrameIndex]);

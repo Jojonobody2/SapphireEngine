@@ -16,7 +16,7 @@ namespace Sapphire
         Logger::Init();
         SAPPHIRE_ENGINE_INFO("Initializing Engine");
 
-        m_Window = IWindow::CreateWindow(m_Name, 1920, 1080);
+        m_Window = IWindow::CreateWindow(m_Name, 1280, 720);
         m_Window->SetEventCallback(EventCallback);
 
         PushLayer(new ImGuiLayer());

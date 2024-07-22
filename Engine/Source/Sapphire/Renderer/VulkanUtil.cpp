@@ -119,7 +119,7 @@ namespace Sapphire
         {
             bool Found = false;
 
-            for (VkExtensionProperties ExtensionProperties : DeviceExtensions)
+            for (const auto& ExtensionProperties : DeviceExtensions)
             {
                 if (strcmp(Extension, ExtensionProperties.extensionName) == 0)
                 {
@@ -191,5 +191,39 @@ namespace Sapphire
         DependencyInfo.pImageMemoryBarriers = &ImageBarrier;
 
         vkCmdPipelineBarrier2(Cmd, &DependencyInfo);
+    }
+
+    void BlitImage(VkCommandBuffer Cmd, const GPUImage& Src, const GPUImage& Dst)
+    {
+        VkImageBlit2 ImageBlitRegion{};
+        ImageBlitRegion.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+        ImageBlitRegion.pNext = nullptr;
+        ImageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        ImageBlitRegion.srcSubresource.baseArrayLayer = 0;
+        ImageBlitRegion.srcSubresource.layerCount = 1;
+        ImageBlitRegion.dstSubresource.mipLevel = 0;
+        ImageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        ImageBlitRegion.dstSubresource.baseArrayLayer = 0;
+        ImageBlitRegion.dstSubresource.layerCount = 1;
+        ImageBlitRegion.dstSubresource.mipLevel = 0;
+        ImageBlitRegion.srcOffsets[1].x = Src.ImageSize.width;
+        ImageBlitRegion.srcOffsets[1].y = Src.ImageSize.height;
+        ImageBlitRegion.srcOffsets[1].z = 1;
+        ImageBlitRegion.dstOffsets[1].x = Dst.ImageSize.width;
+        ImageBlitRegion.dstOffsets[1].y = Dst.ImageSize.height;
+        ImageBlitRegion.dstOffsets[1].z = 1;
+
+        VkBlitImageInfo2 BlitImageInfo{};
+        BlitImageInfo.sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+        BlitImageInfo.pNext = nullptr;
+        BlitImageInfo.srcImage = Src.Image;
+        BlitImageInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        BlitImageInfo.dstImage = Dst.Image;
+        BlitImageInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        BlitImageInfo.regionCount = 1;
+        BlitImageInfo.pRegions = &ImageBlitRegion;
+        //BlitImageInfo.filter = VK_FILTER_CUBIC;
+
+        vkCmdBlitImage2(Cmd, &BlitImageInfo);
     }
 }

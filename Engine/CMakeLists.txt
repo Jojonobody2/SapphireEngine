@@ -73,10 +73,13 @@ add_library(Engine
         Source/Sapphire/Platform/Windows/WindowsTime.cpp
         Source/Sapphire/Renderer/Pipeline.h
         Source/Sapphire/Renderer/Pipeline.cpp
+        Source/Sapphire/Renderer/GPUResources.h
+        Source/Sapphire/Renderer/GPUMemory.cpp
+        Source/Sapphire/Renderer/GPUMemory.h
 )
 
 target_include_directories(Engine
-        PRIVATE ThirdParty/glfw/include ThirdParty/stb ThirdParty/libwebp/src ${Vulkan_INCLUDE_DIRS}
+        PRIVATE ThirdParty/glfw/include ThirdParty/stb ThirdParty/libwebp/src ThirdParty/VulkanMemoryAllocator ${Vulkan_INCLUDE_DIRS}
         PUBLIC ThirdParty/spdlog/include ThirdParty/imgui Source)
 target_link_libraries(Engine
         PRIVATE vulkan glfw webp

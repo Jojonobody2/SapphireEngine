@@ -1,3 +1,7 @@
+#pragma once
+
+#include "GPUResources.h"
+
 #include "Sapphire/Logging/Logger.h"
 
 #include <vulkan/vulkan.h>
@@ -21,4 +25,5 @@ namespace Sapphire
     QueueFamilyIndices SelectQueueFamilies(VkPhysicalDevice PhysicalDevice, VkSurfaceKHR Surface);
 
     void TransitionImageLayout(VkCommandBuffer Cmd, VkImage Image, VkImageLayout Old, VkImageLayout New);
+    void BlitImage(VkCommandBuffer Cmd, const GPUImage& Src, const GPUImage& Dst);
 }

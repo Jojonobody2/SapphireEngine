@@ -4,6 +4,7 @@
 #include "Swapchain.h"
 #include "CommandList.h"
 #include "Pipeline.h"
+#include "GPUMemory.h"
 
 #include "Sapphire/Core/Base.h"
 
@@ -15,6 +16,11 @@
 namespace Sapphire
 {
     constexpr auto FRAMES_IN_FLIGHT = 3;
+
+    struct Vertex
+    {
+        float x, y, z, padding;
+    };
 
     class Renderer
     {
@@ -31,6 +37,11 @@ namespace Sapphire
         SharedPtr<Swapchain> m_Swapchain;
         std::vector<SharedPtr<CommandList>> m_CommandLists;
         SharedPtr<GraphicsPipeline> m_GraphicsPipeline{};
+
+        SharedPtr<GPUMemoryAllocator> m_GPUMemoryAllocator{};
+
+        GPUImage m_RenderImage{};
+        GPUBufferAddressable m_VertexBuffer{};
 
         VkDescriptorPool m_ImGuiPool{};
 

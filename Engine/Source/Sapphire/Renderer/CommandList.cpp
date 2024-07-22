@@ -53,12 +53,20 @@ namespace Sapphire
         VkCheck(vkEndCommandBuffer(m_CommandBuffer));
 
         VkCommandBufferSubmitInfo CmdSubmitInfo = CommandBufferSubmitInfo(m_CommandBuffer);
-        VkSemaphoreSubmitInfo WaitSemaphoreInfo = SemaphoreSubmitInfo(WaitSemaphore, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);
-        VkSemaphoreSubmitInfo SignalSemaphoreInfo = SemaphoreSubmitInfo(m_Semaphore, VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT);
+        
+        VkSubmitInfo2 CLSubmitInfo{};
 
-        VkSubmitInfo2 CLSubmitInfo = SubmitInfo(1, &WaitSemaphoreInfo, 1,
-                                                &SignalSemaphoreInfo, 1, &CmdSubmitInfo);
+        if (WaitSemaphore)
+        {
+            VkSemaphoreSubmitInfo WaitSemaphoreInfo = SemaphoreSubmitInfo(WaitSemaphore, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR);
+            VkSemaphoreSubmitInfo SignalSemaphoreInfo = SemaphoreSubmitInfo(m_Semaphore, VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT);
 
+            CLSubmitInfo = SubmitInfo(1, &WaitSemaphoreInfo, 1,
+                &SignalSemaphoreInfo, 1, &CmdSubmitInfo);
+        }
+        else
+            CLSubmitInfo = SubmitInfo(0, nullptr, 0, nullptr, 1, &CmdSubmitInfo);
+        
         VkCheck(vkQueueSubmit2(m_RenderContext->GetGraphicsQueue().DeviceQueue, 1, &CLSubmitInfo, m_Fence));
     }
 }

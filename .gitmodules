@@ -19,3 +19,6 @@
 [submodule "Engine/ThirdParty/imgui"]
 	path = Engine/ThirdParty/imgui
 	url = https://github.com/Jojonobody2/imgui
+[submodule "Engine/ThirdParty/VulkanMemoryAllocator"]
+	path = Engine/ThirdParty/VulkanMemoryAllocator
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
