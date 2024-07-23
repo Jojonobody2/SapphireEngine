@@ -24,6 +24,7 @@ namespace Sapphire
 
     QueueFamilyIndices SelectQueueFamilies(VkPhysicalDevice PhysicalDevice, VkSurfaceKHR Surface);
 
-    void TransitionImageLayout(VkCommandBuffer Cmd, VkImage Image, VkImageLayout Old, VkImageLayout New);
+    void TransitionImageLayout(VkCommandBuffer Cmd, VkImage Image, VkImageLayout Old, VkImageLayout New, 
+        VkImageAspectFlags ImageAspect = VK_IMAGE_ASPECT_COLOR_BIT);
     void BlitImage(VkCommandBuffer Cmd, const GPUImage& Src, const GPUImage& Dst);
 }

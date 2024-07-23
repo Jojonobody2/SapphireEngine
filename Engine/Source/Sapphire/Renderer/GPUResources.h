@@ -29,4 +29,10 @@ namespace Sapphire
         GPUBuffer Buffer;
         VkDeviceAddress BufferAddress;
     };
+
+    struct GPUMeshBuffer
+    {
+        GPUBufferAddressable VertexBuffer;
+        GPUBuffer IndexBuffer;
+    };
 }

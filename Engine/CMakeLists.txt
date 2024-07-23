@@ -9,6 +9,7 @@ add_subdirectory(ThirdParty/glfw)
 add_subdirectory(ThirdParty/spdlog)
 add_subdirectory(ThirdParty/libwebp)
 add_subdirectory(ThirdParty/imgui)
+add_subdirectory(ThirdParty/assimp)
 
 project(Engine)
 
@@ -78,13 +79,19 @@ add_library(Engine
         Source/Sapphire/Renderer/GPUMemory.h
         Source/Sapphire/Import/Model/ModelImporter.cpp
         Source/Sapphire/Import/Model/ModelImporter.h
+        Source/Sapphire/Import/Model/Impl/AssimpModelImporter.cpp
+        Source/Sapphire/Import/Model/Impl/AssimpModelImporter.h
+        Source/Sapphire/Renderer/Descriptor.h
+        Source/Sapphire/Renderer/Descriptor.cpp
+        Source/Sapphire/Math/Camera.cpp
+        Source/Sapphire/Math/Camera.h
 )
 
 target_include_directories(Engine
-        PRIVATE ThirdParty/glfw/include ThirdParty/stb ThirdParty/libwebp/src ThirdParty/VulkanMemoryAllocator ${Vulkan_INCLUDE_DIRS}
+        PRIVATE ThirdParty/glfw/include ThirdParty/stb ThirdParty/libwebp/src ThirdParty/VulkanMemoryAllocator ThirdParty/assimp/include ${Vulkan_INCLUDE_DIRS}
         PUBLIC ThirdParty/spdlog/include ThirdParty/imgui ThirdParty/glm Source)
 target_link_libraries(Engine
-        PRIVATE vulkan glfw webp
+        PRIVATE vulkan glfw webp assimp
         PUBLIC spdlog imgui)
 
 if (OS STREQUAL "Windows")

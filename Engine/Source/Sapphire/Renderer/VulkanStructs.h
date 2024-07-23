@@ -25,7 +25,10 @@ namespace Sapphire
     VkSemaphoreCreateInfo SemaphoreInfo();
 
     VkRenderingAttachmentInfo ColorAttachmentInfo(VkImageView ImageView, VkImageLayout ImageLayout, VkClearColorValue* ClearColor = nullptr);
-    VkRenderingInfo RenderingInfo(uint32_t ColorAttachmentCount, VkRenderingAttachmentInfo* pColorAttachmentInfos,
+    VkRenderingAttachmentInfo DepthAttachmentInfo(VkImageView ImageView, VkImageLayout ImageLayout, bool Clear = false);
+
+    VkRenderingInfo RenderingInfo(uint32_t ColorAttachmentCount, VkRenderingAttachmentInfo* pColorAttachmentInfos, 
+                                  VkRenderingAttachmentInfo* pDepthAttachment = nullptr,
                                   VkRect2D RenderingArea = { 0, 0,
                                                              Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight() });
 }

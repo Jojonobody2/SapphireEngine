@@ -142,7 +142,22 @@ namespace Sapphire
         return AttachmentInfo;
     }
 
-    VkRenderingInfo RenderingInfo(uint32_t ColorAttachmentCount, VkRenderingAttachmentInfo *pColorAttachmentInfos, VkRect2D RenderingArea)
+    VkRenderingAttachmentInfo DepthAttachmentInfo(VkImageView ImageView, VkImageLayout ImageLayout, bool Clear)
+    {
+        VkRenderingAttachmentInfo AttachmentInfo{};
+        AttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        AttachmentInfo.pNext = nullptr;
+        if (Clear) AttachmentInfo.clearValue.depthStencil.depth = 1.f;
+        AttachmentInfo.imageLayout = ImageLayout;
+        AttachmentInfo.imageView = ImageView;
+        AttachmentInfo.loadOp = Clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+        AttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+
+        return AttachmentInfo;
+    }
+
+    VkRenderingInfo RenderingInfo(uint32_t ColorAttachmentCount, VkRenderingAttachmentInfo *pColorAttachmentInfos, 
+        VkRenderingAttachmentInfo* pDepthAttachment, VkRect2D RenderingArea)
     {
         VkRenderingInfo RenderingInfo{};
         RenderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
@@ -150,6 +165,7 @@ namespace Sapphire
         RenderingInfo.flags = 0;
         RenderingInfo.colorAttachmentCount = ColorAttachmentCount;
         RenderingInfo.pColorAttachments = pColorAttachmentInfos;
+        if (pDepthAttachment) RenderingInfo.pDepthAttachment = pDepthAttachment;
         RenderingInfo.renderArea = RenderingArea;
         RenderingInfo.layerCount = 1;
 

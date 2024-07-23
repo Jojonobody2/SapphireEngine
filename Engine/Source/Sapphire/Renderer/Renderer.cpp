@@ -5,6 +5,7 @@
 #include "VulkanStructs.h"
 
 #include "Sapphire/Logging/Logger.h"
+#include "Sapphire/Import/Model/ModelImporter.h"
 
 #include <glm/glm.hpp>
 
@@ -30,86 +31,56 @@ namespace Sapphire
         m_RenderImage = m_GPUMemoryAllocator->AllocateImage(m_Swapchain->GetExtent(), VK_FORMAT_R16G16B16A16_SFLOAT,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
 
+        m_DepthImage = m_GPUMemoryAllocator->AllocateImage(m_Swapchain->GetExtent(), VK_FORMAT_D32_SFLOAT,
+            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_DEPTH_BIT));
+
         InitImGui();
 
         SharedPtr<Shader> VertexShader = CreateSharedPtr<Shader>("Resources/Shaders/Shader.vert.spv", m_RenderContext);
         SharedPtr<Shader> FragmentShader = CreateSharedPtr<Shader>("Resources/Shaders/Shader.frag.spv", m_RenderContext);
+
+        DescriptorSetLayoutBuilder Builder{};
+        Builder.AddUBO(0, VK_SHADER_STAGE_VERTEX_BIT);
+
+        m_GraphicsSetLayout = Builder.Build(m_RenderContext);
 
         GraphicsPipelineInfo TrianglePipelineInfo{};
         TrianglePipelineInfo.VertexShader = VertexShader;
         TrianglePipelineInfo.FragmentShader = FragmentShader;
         TrianglePipelineInfo.ColorAttachmentCount = 1;
         TrianglePipelineInfo.pColorAttachments = &m_RenderImage.ImageFormat;
+        TrianglePipelineInfo.pDepthAttachmentFormat = &m_DepthImage.ImageFormat;
         TrianglePipelineInfo.Wireframe = false;
+        TrianglePipelineInfo.DescriptorCount = 1;
+        TrianglePipelineInfo.pDescriptors = &m_GraphicsSetLayout;
 
         m_GraphicsPipeline = CreateSharedPtr<GraphicsPipeline>(m_RenderContext, TrianglePipelineInfo);
+        m_DescriptorAllocator = CreateSharedPtr<DescriptorAllocator>(m_RenderContext);
 
-        {
-            Vertex Vertices[] =
-            {
-                    {-1.0f, -1.0f, -1.0f},  // 0: Bottom-left-back
-                    { 1.0f, -1.0f, -1.0f},  // 1: Bottom-right-back
-                    { 1.0f,  1.0f, -1.0f},  // 2: Top-right-back
-                    {-1.0f,  1.0f, -1.0f},  // 3: Top-left-back
-                    {-1.0f, -1.0f,  1.0f},  // 4: Bottom-left-front
-                    { 1.0f, -1.0f,  1.0f},  // 5: Bottom-right-front
-                    { 1.0f,  1.0f,  1.0f},  // 6: Top-right-front
-                    {-1.0f,  1.0f,  1.0f}   // 7: Top-left-front // top top-left
-            };
+        MeshData MonkeyMeshData = ModelImporter::Import("Resources/Models/monkey.glb");
+        m_MonkeyMesh = m_GPUMemoryAllocator->UploadMesh(MonkeyMeshData);
 
-            uint32_t Indices[] =
-            {
-                    // Back face
-                    0, 1, 2,
-                    0, 2, 3,
-                    // Front face
-                    4, 5, 6,
-                    4, 6, 7,
-                    // Left face
-                    0, 4, 7,
-                    0, 7, 3,
-                    // Right face
-                    1, 5, 6,
-                    1, 6, 2,
-                    // Bottom face
-                    0, 1, 5,
-                    0, 5, 4,
-                    // Top face
-                    3, 2, 6,
-                    3, 6, 7
-            };
+        m_GraphicsDescriptor = m_DescriptorAllocator->AllocateSet(m_GraphicsSetLayout);
 
-            GPUBuffer StagingBuffer = m_GPUMemoryAllocator->AllocateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY,
-                sizeof(Vertices) + sizeof(Indices));
-            m_GPUMemoryAllocator->CopyDataToHost(StagingBuffer, Vertices, sizeof(Vertices));
-            m_GPUMemoryAllocator->CopyDataToHost(StagingBuffer, Indices, sizeof(Indices), sizeof(Vertices));
+        m_GraphicsUBO = m_GPUMemoryAllocator->AllocateBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VMA_MEMORY_USAGE_CPU_TO_GPU, sizeof(GraphicsDescriptor));
 
-            m_VertexBuffer = m_GPUMemoryAllocator->AllocateBufferAddressable(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                    VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(Vertices));
-
-            m_IndexBuffer = m_GPUMemoryAllocator->AllocateBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-                    VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, sizeof(Indices));
-
-            SharedPtr<CommandList> UploadCmdList = CreateSharedPtr<CommandList>(m_RenderContext);
-
-            UploadCmdList->Wait();
-            VkCommandBuffer Cmd = UploadCmdList->Begin();
-            m_GPUMemoryAllocator->CopyBufferToBuffer(Cmd, StagingBuffer, m_VertexBuffer.Buffer);
-            m_GPUMemoryAllocator->CopyBufferToBuffer(Cmd, StagingBuffer, m_IndexBuffer, sizeof(Vertices));
-            UploadCmdList->Submit(nullptr);
-            UploadCmdList->Wait();
-
-            m_GPUMemoryAllocator->DestroyBuffer(StagingBuffer);
-        }
+        DescriptorWriter Writer{};
+        Writer.AddBuffer(0, m_GraphicsUBO);
+        Writer.WriteSet(m_RenderContext, m_GraphicsDescriptor);
     }
 
     Renderer::~Renderer()
     {
         VkCheck(vkDeviceWaitIdle(m_RenderContext->GetDevice()));
 
-        m_GPUMemoryAllocator->DestroyBuffer(m_IndexBuffer);
-        m_GPUMemoryAllocator->DestroyBuffer(m_VertexBuffer);
+        vkDestroyDescriptorSetLayout(m_RenderContext->GetDevice(), m_GraphicsSetLayout, nullptr);
 
+        m_GPUMemoryAllocator->DestroyBuffer(m_GraphicsUBO);
+        
+        m_GPUMemoryAllocator->DestroyMesh(m_MonkeyMesh);
+
+        m_GPUMemoryAllocator->DestroyImage(m_DepthImage);
         m_GPUMemoryAllocator->DestroyImage(m_RenderImage);
 
         ImGui_ImplVulkan_Shutdown();
@@ -172,11 +143,27 @@ namespace Sapphire
         VkCommandBuffer Cmd = m_CommandLists[FrameIndex]->Begin();
 
         TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        TransitionImageLayout(Cmd, m_DepthImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+            VK_IMAGE_ASPECT_DEPTH_BIT);
+
+        auto Proj = glm::perspective(glm::radians(45.0f), 1280.f / (float)720.f, 0.1f, 1000.0f);
+        //Vulkan's y-Axis is flipped compared to OpenGL based GLM
+        Proj[1][1] *= -1;
+
+        m_Camera.Move({ 0, 0, 0 });
+
+        GraphicsDescriptor Desc{};
+        Desc.View = m_Camera.GetViewMat();
+        Desc.Proj = Proj;
+
+        m_GPUMemoryAllocator->CopyDataToHost(m_GraphicsUBO, &Desc, sizeof(GraphicsDescriptor));
 
         VkClearColorValue ClearValue = { 1, 0, 1, 1 };
         VkRenderingAttachmentInfo TriangleColorAttachmentInfo = ColorAttachmentInfo(m_RenderImage.ImageView,
                                                                                  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &ClearValue);
-        VkRenderingInfo TriangleRenderingInfo = RenderingInfo(1, &TriangleColorAttachmentInfo);
+        VkRenderingAttachmentInfo GraphicsDepthAttachmentInfo = DepthAttachmentInfo(m_DepthImage.ImageView,
+                                                                                 VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, true);
+        VkRenderingInfo TriangleRenderingInfo = RenderingInfo(1, &TriangleColorAttachmentInfo, &GraphicsDepthAttachmentInfo);
 
         vkCmdBeginRendering(Cmd, &TriangleRenderingInfo);
 
@@ -206,24 +193,19 @@ namespace Sapphire
             VkDeviceAddress DeviceAddr;
         } Consts{};
 
-        Consts.DeviceAddr = m_VertexBuffer.BufferAddress;
+        Consts.DeviceAddr = m_MonkeyMesh.VertexBuffer.BufferAddress;
 
-        auto Proj = glm::perspective(glm::radians(45.0f), 1280.f / (float) 720.f, 0.1f, 10.0f);
-        //Vulkan's y-Axis is flipped compared to OpenGL based GLM
-        Proj[1][1] *= -1;
-
-        auto Model = glm::translate(glm::mat4(1.f), glm::vec3(-1, -1, -1));
-        Model = glm::rotate(Model, 1 * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-        auto View = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-        Consts.MVPMat = Proj * View * Model;
+        auto Model = glm::translate(glm::mat4(1.f), glm::vec3(0, 0, -5));
+        Consts.MVPMat = Model;
 
         vkCmdPushConstants(Cmd, m_GraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants),
             &Consts);
 
-        vkCmdBindIndexBuffer(Cmd, m_IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(Cmd, 36, 1, 0, 0, 0);
+        vkCmdBindDescriptorSets(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipelineLayout(), 0, 1, &m_GraphicsDescriptor,
+            0, nullptr);
+
+        vkCmdBindIndexBuffer(Cmd, m_MonkeyMesh.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(Cmd, 2904, 1, 0, 0, 0);
 
         vkCmdEndRendering(Cmd);
 

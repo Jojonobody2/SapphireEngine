@@ -1,7 +1,9 @@
 #include "Application.h"
 
 #include "Sapphire/Logging/Logger.h"
+#include "Sapphire/Event/KeyEvent.h"
 #include "Sapphire/ImGui/ImGuiLayer.h"
+
 #include "Time.h"
 
 namespace Sapphire

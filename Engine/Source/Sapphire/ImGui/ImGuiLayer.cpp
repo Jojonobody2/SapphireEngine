@@ -17,12 +17,19 @@ namespace Sapphire
         IO.Fonts->AddFontFromFileTTF("Resources/Fonts/JetBrains Mono.ttf", 18);
     }
 
+    bool w, a, s, d;
+
     void ImGuiLayer::OnUpdate(double Delta)
     {
         ImGuiIO& IO = ImGui::GetIO();
         IO.DisplaySize = { (float)Application::Get().GetWindow().GetWidth(), (float)Application::Get().GetWindow().GetHeight() };
         IO.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         IO.DeltaTime = (float)Delta / 1000.0f;
+
+        if (d) Application::Get().GetRenderer().GetCamera().Move({ 0.005f * Delta, 0, 0 });
+        if (w) Application::Get().GetRenderer().GetCamera().Move({ 0, 0, -0.005f * Delta });
+        if (a) Application::Get().GetRenderer().GetCamera().Move({ -0.005f * Delta, 0, 0 });
+        if (s) Application::Get().GetRenderer().GetCamera().Move({ 0, 0, 0.005f * Delta });
 
         ImGui::NewFrame();
     }
@@ -38,12 +45,22 @@ namespace Sapphire
                 KeyPressedEvent Event = *reinterpret_cast<KeyPressedEvent*>(&E);
                 IO.AddKeyEvent(TranslateKey(Event.GetKeyCode()), true);
 
+                if (Event.GetKeyCode() == KeyCode::SK_W) w = true;
+                if (Event.GetKeyCode() == KeyCode::SK_A) a = true;
+                if (Event.GetKeyCode() == KeyCode::SK_S) s = true;
+                if (Event.GetKeyCode() == KeyCode::SK_D) d = true;
+
                 break;
             }
             case EventType::KeyReleased:
             {
                 KeyReleasedEvent Event = *reinterpret_cast<KeyReleasedEvent*>(&E);
                 IO.AddKeyEvent(TranslateKey(Event.GetKeyCode()), false);
+
+                if (Event.GetKeyCode() == KeyCode::SK_W) w = false;
+                if (Event.GetKeyCode() == KeyCode::SK_A) a = false;
+                if (Event.GetKeyCode() == KeyCode::SK_S) s = false;
+                if (Event.GetKeyCode() == KeyCode::SK_D) d = false;
 
                 break;
             }

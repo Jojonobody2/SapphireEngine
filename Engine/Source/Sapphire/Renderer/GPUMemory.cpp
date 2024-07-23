@@ -140,4 +140,40 @@ namespace Sapphire
 
         vkCmdCopyBuffer(Cmd, Src.Buffer, Dst.Buffer, 1, &BufferCopy);
     }
+
+    GPUMeshBuffer GPUMemoryAllocator::UploadMesh(MeshData& MeshData)
+    {
+        GPUMeshBuffer MeshBuffer{};
+
+        GPUBuffer StagingBuffer = AllocateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY,
+            MeshData.Vertices.size() * sizeof(Vertex) + MeshData.Indices.size() * sizeof(uint32_t));
+        CopyDataToHost(StagingBuffer, MeshData.Vertices.data(), MeshData.Vertices.size() * sizeof(Vertex));
+        CopyDataToHost(StagingBuffer, MeshData.Indices.data(), MeshData.Indices.size() *
+            sizeof(uint32_t), MeshData.Vertices.size() * sizeof(Vertex));
+
+        MeshBuffer.VertexBuffer = AllocateBufferAddressable(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, MeshData.Vertices.size() * sizeof(Vertex));
+
+        MeshBuffer.IndexBuffer = AllocateBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, MeshData.Indices.size() * sizeof(uint32_t));
+
+        SharedPtr<CommandList> UploadCmdList = CreateSharedPtr<CommandList>(m_RenderContext);
+
+        UploadCmdList->Wait();
+        VkCommandBuffer Cmd = UploadCmdList->Begin();
+        CopyBufferToBuffer(Cmd, StagingBuffer, MeshBuffer.VertexBuffer.Buffer);
+        CopyBufferToBuffer(Cmd, StagingBuffer, MeshBuffer.IndexBuffer, MeshData.Vertices.size() * sizeof(Vertex));
+        UploadCmdList->Submit(nullptr);
+        UploadCmdList->Wait();
+
+        DestroyBuffer(StagingBuffer);
+
+        return MeshBuffer;
+    }
+
+    void GPUMemoryAllocator::DestroyMesh(const GPUMeshBuffer& MeshBuffer)
+    {
+        DestroyBuffer(MeshBuffer.IndexBuffer);
+        DestroyBuffer(MeshBuffer.VertexBuffer);
+    }
 }

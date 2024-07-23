@@ -36,7 +36,10 @@ namespace Sapphire
         SharedPtr<Shader> FragmentShader;
         uint32_t ColorAttachmentCount;
         VkFormat* pColorAttachments;
+        VkFormat* pDepthAttachmentFormat = nullptr;
         bool Wireframe = false;
+        uint32_t DescriptorCount = 0;
+        VkDescriptorSetLayout* pDescriptors = nullptr;
     };
 
     class GraphicsPipeline

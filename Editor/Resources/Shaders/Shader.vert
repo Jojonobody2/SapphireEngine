@@ -6,6 +6,7 @@ layout (location = 0) out vec3 oColor;
 struct Vertex
 {
 	vec3 Pos;
+	vec3 Nml;
 }; 
 
 layout(buffer_reference, std430) readonly buffer VertexBuffer
@@ -16,14 +17,21 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer
 
 layout( push_constant ) uniform constants
 {
-	mat4 MVPMat;
+	mat4 Model;
 	VertexBuffer pVertexBuffer;
 } PushConstants;
+
+
+layout (set = 0, binding = 0) uniform UBO
+{
+	mat4 View;
+	mat4 Proj;
+} Uniforms;
 
 void main() 
 {	
 	Vertex V = PushConstants.pVertexBuffer.Vertices[gl_VertexIndex];
-	gl_Position = PushConstants.MVPMat * vec4(V.Pos, 1.0f);
+	gl_Position = Uniforms.Proj * Uniforms.View * PushConstants.Model * vec4(V.Pos, 1.0f);
 
-	oColor = vec3(0.3215686274509804f, 0.66862745098039217f, 0.2784313725490196f);
+	oColor = V.Nml;
 }

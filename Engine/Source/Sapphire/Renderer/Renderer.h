@@ -4,9 +4,12 @@
 #include "Swapchain.h"
 #include "CommandList.h"
 #include "Pipeline.h"
+#include "Descriptor.h"
 #include "GPUMemory.h"
 
 #include "Sapphire/Core/Base.h"
+
+#include "Sapphire/Math/Camera.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -17,9 +20,10 @@ namespace Sapphire
 {
     constexpr auto FRAMES_IN_FLIGHT = 3;
 
-    struct Vertex
+    struct GraphicsDescriptor
     {
-        float x, y, z, padding;
+        glm::mat4 View;
+        glm::mat4 Proj;
     };
 
     class Renderer
@@ -28,7 +32,7 @@ namespace Sapphire
         Renderer();
         virtual ~Renderer();
 
-        void InitImGui();
+        Camera& GetCamera() { return m_Camera; }
 
         void Draw();
 
@@ -39,14 +43,24 @@ namespace Sapphire
         SharedPtr<GraphicsPipeline> m_GraphicsPipeline{};
 
         SharedPtr<GPUMemoryAllocator> m_GPUMemoryAllocator{};
+        SharedPtr<DescriptorAllocator> m_DescriptorAllocator{};
 
         GPUImage m_RenderImage{};
+        GPUImage m_DepthImage{};
 
-        GPUBufferAddressable m_VertexBuffer{};
-        GPUBuffer m_IndexBuffer{};
+        GPUMeshBuffer m_MonkeyMesh{};
+
+        Camera m_Camera{};
+
+        VkDescriptorSetLayout m_GraphicsSetLayout{};
+        VkDescriptorSet m_GraphicsDescriptor{};
+        GPUBuffer m_GraphicsUBO{};
 
         VkDescriptorPool m_ImGuiPool{};
 
         uint32_t FrameIndex{};
+
+    private:
+        void InitImGui();
     };
 }

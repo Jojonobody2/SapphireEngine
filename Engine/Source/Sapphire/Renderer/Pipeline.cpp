@@ -59,8 +59,8 @@ namespace Sapphire
         PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         PipelineLayoutCreateInfo.pNext = nullptr;
         PipelineLayoutCreateInfo.flags = 0;
-        PipelineLayoutCreateInfo.setLayoutCount = 0;
-        PipelineLayoutCreateInfo.pSetLayouts = nullptr;
+        PipelineLayoutCreateInfo.setLayoutCount = GraphicsPipelineInfo.DescriptorCount;
+        PipelineLayoutCreateInfo.pSetLayouts = GraphicsPipelineInfo.pDescriptors;
         PipelineLayoutCreateInfo.pushConstantRangeCount = 1;
         PipelineLayoutCreateInfo.pPushConstantRanges = &PushConstants;
 
@@ -113,9 +113,18 @@ namespace Sapphire
         DepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         DepthStencilStateCreateInfo.pNext = nullptr;
         DepthStencilStateCreateInfo.flags = 0;
-        DepthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
-        DepthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
-        DepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_NEVER;
+        if (GraphicsPipelineInfo.pDepthAttachmentFormat)
+        {
+            DepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+            DepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+            DepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+        }
+        else
+        {
+            DepthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
+            DepthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
+            DepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_NEVER;
+        }
         DepthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
         DepthStencilStateCreateInfo.stencilTestEnable = VK_FALSE;
         DepthStencilStateCreateInfo.front = {};
@@ -154,7 +163,10 @@ namespace Sapphire
         RenderingCreateInfo.pNext = nullptr;
         RenderingCreateInfo.colorAttachmentCount = GraphicsPipelineInfo.ColorAttachmentCount;
         RenderingCreateInfo.pColorAttachmentFormats = GraphicsPipelineInfo.pColorAttachments;
-        RenderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+        if (GraphicsPipelineInfo.pDepthAttachmentFormat)
+            RenderingCreateInfo.depthAttachmentFormat = *GraphicsPipelineInfo.pDepthAttachmentFormat;
+        else
+            RenderingCreateInfo.depthAttachmentFormat = VK_FORMAT_UNDEFINED;
 
         VkGraphicsPipelineCreateInfo GraphicsPipelineCreateInfo{};
         GraphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
