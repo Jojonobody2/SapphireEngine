@@ -40,6 +40,8 @@ namespace Sapphire
         bool Wireframe = false;
         uint32_t DescriptorCount = 0;
         VkDescriptorSetLayout* pDescriptors = nullptr;
+        uint32_t PushConstantRangeCount = 0;
+        VkPushConstantRange* pPushConstantRanges = nullptr;
     };
 
     class GraphicsPipeline

@@ -9,7 +9,8 @@
 
 #include "Sapphire/Core/Base.h"
 
-#include "Sapphire/Math/Camera.h"
+#include "Sapphire/Scene/Camera.h"
+#include "Sapphire/Scene/Scene.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -26,13 +27,19 @@ namespace Sapphire
         glm::mat4 Proj;
     };
 
+    struct GraphicsConstants
+    {
+        glm::mat4 Model;
+        VkDeviceAddress VertexBuffer;
+    };
+
     class Renderer
     {
     public:
         Renderer();
         virtual ~Renderer();
 
-        Camera& GetCamera() { return m_Camera; }
+        Camera& GetCamera() { return m_Scene.GetCamera(); }
 
         void Draw();
 
@@ -50,7 +57,7 @@ namespace Sapphire
 
         GPUMeshBuffer m_MonkeyMesh{};
 
-        Camera m_Camera{};
+        Scene m_Scene{};
 
         VkDescriptorSetLayout m_GraphicsSetLayout{};
         VkDescriptorSet m_GraphicsDescriptor{};

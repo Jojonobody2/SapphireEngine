@@ -171,4 +171,28 @@ namespace Sapphire
 
         return RenderingInfo;
     }
+
+    VkViewport ViewportInfo(float Width, float Height, float X, float Y, float MinDepth, float MaxDepth)
+    {
+        VkViewport Viewport{};
+        Viewport.width = Width;
+        Viewport.height = Height;
+        Viewport.x = X;
+        Viewport.y = Y;
+        Viewport.minDepth = MinDepth;
+        Viewport.maxDepth = MaxDepth;
+
+        return Viewport;
+    }
+
+    VkRect2D ScissorInfo(uint32_t Width, uint32_t Height, int32_t X, int32_t Y)
+    {
+        VkRect2D Scissor{};
+        Scissor.offset.x = X;
+        Scissor.offset.y = Y;
+        Scissor.extent.width = Width;
+        Scissor.extent.height = Height;
+
+        return Scissor;
+    }
 }

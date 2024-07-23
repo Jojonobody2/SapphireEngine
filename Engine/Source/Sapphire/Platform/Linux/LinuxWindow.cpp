@@ -21,6 +21,9 @@ namespace Sapphire
         const GLFWvidmode* VidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         glfwSetWindowPos(m_Window, (VidMode->width - Width) / 2, (VidMode->height - Height) / 2);
 
+        //glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        //glfwSetInputMode(m_Window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+
         glfwSetKeyCallback(m_Window, KeyCallback);
         glfwSetCharCallback(m_Window, CharCallback);
         glfwSetMouseButtonCallback(m_Window, MouseButtonCallback);

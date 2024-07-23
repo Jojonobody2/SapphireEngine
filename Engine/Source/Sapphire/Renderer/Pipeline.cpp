@@ -50,19 +50,14 @@ namespace Sapphire
     {
         m_RenderContext = RenderContext;
 
-        VkPushConstantRange PushConstants{};
-        PushConstants.offset = 0;
-        PushConstants.size = 72;
-        PushConstants.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
         VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo{};
         PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         PipelineLayoutCreateInfo.pNext = nullptr;
         PipelineLayoutCreateInfo.flags = 0;
         PipelineLayoutCreateInfo.setLayoutCount = GraphicsPipelineInfo.DescriptorCount;
         PipelineLayoutCreateInfo.pSetLayouts = GraphicsPipelineInfo.pDescriptors;
-        PipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-        PipelineLayoutCreateInfo.pPushConstantRanges = &PushConstants;
+        PipelineLayoutCreateInfo.pushConstantRangeCount = GraphicsPipelineInfo.PushConstantRangeCount;
+        PipelineLayoutCreateInfo.pPushConstantRanges = GraphicsPipelineInfo.pPushConstantRanges;
 
         VkCheck(vkCreatePipelineLayout(m_RenderContext->GetDevice(), &PipelineLayoutCreateInfo, nullptr, &m_GraphicsPipelineLayout));
 

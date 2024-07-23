@@ -18,6 +18,11 @@ namespace Sapphire
     }
 
     bool w, a, s, d;
+    bool mb, first = true;
+
+    float sens = 0.2f;
+
+    float lx, ly;
 
     void ImGuiLayer::OnUpdate(double Delta)
     {
@@ -76,6 +81,8 @@ namespace Sapphire
                 MouseButtonPressedEvent Event = *reinterpret_cast<MouseButtonPressedEvent*>(&E);
                 IO.AddMouseButtonEvent(TranslateMouseButton(Event.GetMouseButton()), true);
 
+                if (Event.GetMouseButton() == MouseCode::SM_LEFT) mb = true;
+
                 break;
             }
             case EventType::MouseButtonReleased:
@@ -83,12 +90,22 @@ namespace Sapphire
                 MouseButtonReleasedEvent Event = *reinterpret_cast<MouseButtonReleasedEvent*>(&E);
                 IO.AddMouseButtonEvent(TranslateMouseButton(Event.GetMouseButton()), false);
 
+                if (Event.GetMouseButton() == MouseCode::SM_LEFT) mb = false;
+
                 break;
             }
             case EventType::MouseMoved:
             {
                 MouseMovedEvent Event = *reinterpret_cast<MouseMovedEvent*>(&E);
                 IO.AddMousePosEvent(Event.GetX(), Event.GetY());
+
+                if (!first && mb)
+                    Application::Get().GetRenderer().GetCamera().Rotate(-(Event.GetY() - ly) * sens, (Event.GetX() - lx) * sens);
+                else
+                    first = false;
+
+                lx = Event.GetX();
+                ly = Event.GetY();
 
                 break;
             }

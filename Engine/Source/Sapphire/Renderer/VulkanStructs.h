@@ -31,4 +31,9 @@ namespace Sapphire
                                   VkRenderingAttachmentInfo* pDepthAttachment = nullptr,
                                   VkRect2D RenderingArea = { 0, 0,
                                                              Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight() });
+
+    VkViewport ViewportInfo(float Width = (float)Application::Get().GetWindow().GetWidth(), float Height = (float)Application::Get().GetWindow().
+            GetHeight(), float X = 0, float Y = 0, float MinDepth = 0.f, float MaxDepth = 1.f);
+    VkRect2D ScissorInfo(uint32_t Width = (uint32_t)Application::Get().GetWindow().GetWidth(), uint32_t Height = (uint32_t)Application::Get().GetWindow().
+            GetHeight(), int32_t X = 0, int32_t Y = 0);
 }

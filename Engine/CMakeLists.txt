@@ -83,8 +83,10 @@ add_library(Engine
         Source/Sapphire/Import/Model/Impl/AssimpModelImporter.h
         Source/Sapphire/Renderer/Descriptor.h
         Source/Sapphire/Renderer/Descriptor.cpp
-        Source/Sapphire/Math/Camera.cpp
-        Source/Sapphire/Math/Camera.h
+        Source/Sapphire/Scene/Camera.cpp
+        Source/Sapphire/Scene/Camera.h
+        Source/Sapphire/Scene/Scene.h
+        Source/Sapphire/Scene/Scene.cpp
 )
 
 target_include_directories(Engine

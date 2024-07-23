@@ -222,7 +222,6 @@ namespace Sapphire
         BlitImageInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         BlitImageInfo.regionCount = 1;
         BlitImageInfo.pRegions = &ImageBlitRegion;
-        //BlitImageInfo.filter = VK_FILTER_CUBIC;
 
         vkCmdBlitImage2(Cmd, &BlitImageInfo);
     }

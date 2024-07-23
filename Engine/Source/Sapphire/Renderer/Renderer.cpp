@@ -27,7 +27,7 @@ namespace Sapphire
         }
 
         m_GPUMemoryAllocator = CreateSharedPtr<GPUMemoryAllocator>(m_RenderContext);
-
+        
         m_RenderImage = m_GPUMemoryAllocator->AllocateImage(m_Swapchain->GetExtent(), VK_FORMAT_R16G16B16A16_SFLOAT,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
 
@@ -44,6 +44,11 @@ namespace Sapphire
 
         m_GraphicsSetLayout = Builder.Build(m_RenderContext);
 
+        VkPushConstantRange GraphicsConstantRange{};
+        GraphicsConstantRange.offset = 0;
+        GraphicsConstantRange.size = sizeof(GraphicsConstants);
+        GraphicsConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
         GraphicsPipelineInfo TrianglePipelineInfo{};
         TrianglePipelineInfo.VertexShader = VertexShader;
         TrianglePipelineInfo.FragmentShader = FragmentShader;
@@ -53,6 +58,8 @@ namespace Sapphire
         TrianglePipelineInfo.Wireframe = false;
         TrianglePipelineInfo.DescriptorCount = 1;
         TrianglePipelineInfo.pDescriptors = &m_GraphicsSetLayout;
+        TrianglePipelineInfo.PushConstantRangeCount = 1;
+        TrianglePipelineInfo.pPushConstantRanges = &GraphicsConstantRange;
 
         m_GraphicsPipeline = CreateSharedPtr<GraphicsPipeline>(m_RenderContext, TrianglePipelineInfo);
         m_DescriptorAllocator = CreateSharedPtr<DescriptorAllocator>(m_RenderContext);
@@ -146,15 +153,9 @@ namespace Sapphire
         TransitionImageLayout(Cmd, m_DepthImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
             VK_IMAGE_ASPECT_DEPTH_BIT);
 
-        auto Proj = glm::perspective(glm::radians(45.0f), 1280.f / (float)720.f, 0.1f, 1000.0f);
-        //Vulkan's y-Axis is flipped compared to OpenGL based GLM
-        Proj[1][1] *= -1;
-
-        m_Camera.Move({ 0, 0, 0 });
-
         GraphicsDescriptor Desc{};
-        Desc.View = m_Camera.GetViewMat();
-        Desc.Proj = Proj;
+        Desc.View = m_Scene.GetCamera().GetViewMat();
+        Desc.Proj = m_Scene.GetProjMat();
 
         m_GPUMemoryAllocator->CopyDataToHost(m_GraphicsUBO, &Desc, sizeof(GraphicsDescriptor));
 
@@ -169,37 +170,18 @@ namespace Sapphire
 
         vkCmdBindPipeline(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipeline());
 
-        VkViewport Viewport{};
-        Viewport.x = 0.f;
-        Viewport.y = 0.f;
-        Viewport.width = (float)Application::Get().GetWindow().GetWidth();
-        Viewport.height = (float)Application::Get().GetWindow().GetHeight();
-        Viewport.minDepth = 0.f;
-        Viewport.maxDepth = 1.f;
+        VkViewport GraphicsViewport = ViewportInfo((float)m_RenderImage.ImageSize.width, (float)m_RenderImage.ImageSize.height);
+        vkCmdSetViewport(Cmd, 0, 1, &GraphicsViewport);
 
-        vkCmdSetViewport(Cmd, 0, 1, &Viewport);
+        VkRect2D GraphicsScissor = ScissorInfo((int32_t)m_RenderImage.ImageSize.width, (int32_t)m_RenderImage.ImageSize.height);
+        vkCmdSetScissor(Cmd, 0, 1, &GraphicsScissor);
 
-        VkRect2D Scissor{};
-        Scissor.offset.x = 0;
-        Scissor.offset.y = 0;
-        Scissor.extent.width = Application::Get().GetWindow().GetWidth();
-        Scissor.extent.height = Application::Get().GetWindow().GetHeight();
+        GraphicsConstants PushConstants{};
+        PushConstants.Model = glm::translate(glm::mat4(1.f), glm::vec3(0, 0, -5));
+        PushConstants.VertexBuffer = m_MonkeyMesh.VertexBuffer.BufferAddress;
 
-        vkCmdSetScissor(Cmd, 0, 1, &Scissor);
-
-        struct PushConstants
-        {
-            glm::mat4 MVPMat;
-            VkDeviceAddress DeviceAddr;
-        } Consts{};
-
-        Consts.DeviceAddr = m_MonkeyMesh.VertexBuffer.BufferAddress;
-
-        auto Model = glm::translate(glm::mat4(1.f), glm::vec3(0, 0, -5));
-        Consts.MVPMat = Model;
-
-        vkCmdPushConstants(Cmd, m_GraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants),
-            &Consts);
+        vkCmdPushConstants(Cmd, m_GraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GraphicsConstants),
+            &PushConstants);
 
         vkCmdBindDescriptorSets(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipelineLayout(), 0, 1, &m_GraphicsDescriptor,
             0, nullptr);
