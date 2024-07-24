@@ -20,7 +20,7 @@ namespace Sapphire
     bool w, a, s, d;
     bool mb, first = true;
 
-    float sens = 0.2f;
+    float sens = 0.14f;
 
     float lx, ly;
 

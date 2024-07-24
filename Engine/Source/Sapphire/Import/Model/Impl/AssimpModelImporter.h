@@ -7,6 +7,6 @@ namespace Sapphire
 	class AssimpModelImporter
 	{
 	public:
-		static MeshData Import(const std::filesystem::path& Path);
+		static ModelData Import(const std::filesystem::path& Path);
 	};
 }

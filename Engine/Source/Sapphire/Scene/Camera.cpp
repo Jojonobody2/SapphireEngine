@@ -6,14 +6,11 @@ namespace Sapphire
 {
 	Camera::Camera(const glm::vec3& Pos)
         : m_Pos(Pos)
-	{
-		CalculateView();
-	}
+	{}
 
 	void Camera::SetPos(const glm::vec3& Pos)
 	{
 		m_Pos = Pos;
-		CalculateView();
 	}
 
 	void Camera::Move(const glm::vec3& DPos)
@@ -29,7 +26,6 @@ namespace Sapphire
 		m_Pos -= DPos.z * Front;
         m_Pos += DPos.x * glm::normalize(glm::cross(Front, m_UpDir));
         //m_Pos.z += DPos.z;
-		CalculateView();
 	}
 
 	void Camera::CalculateView()
@@ -48,6 +44,11 @@ namespace Sapphire
     {
         m_Pitch += DX;
         m_Yaw += DZ;
+    }
+
+    const glm::mat4& Camera::GetViewMat()
+    {
         CalculateView();
+        return m_ViewMat;
     }
 }

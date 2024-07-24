@@ -7,11 +7,7 @@ class EditorLayer : public Sapphire::ILayer
 public:
     void OnAttach() override
     {
-        Sapphire::WindowModeWindowed WM{};
-        WM.Width = 1280;
-        WM.Height = 720;
 
-        Sapphire::Application::Get().GetWindow().SetWindowMode(WM);
     }
 
     void OnUpdate(double Delta) override

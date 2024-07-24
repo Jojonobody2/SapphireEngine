@@ -44,6 +44,17 @@ namespace Sapphire
 
         m_GraphicsSetLayout = Builder.Build(m_RenderContext);
 
+        Builder.Clear();
+        Builder.AddTexture(0);
+        
+        m_TextureSetLayout = Builder.Build(m_RenderContext);
+
+        VkDescriptorSetLayout GraphicsDescriptors[] =
+        {
+            m_GraphicsSetLayout,
+            m_TextureSetLayout
+        };
+
         VkPushConstantRange GraphicsConstantRange{};
         GraphicsConstantRange.offset = 0;
         GraphicsConstantRange.size = sizeof(GraphicsConstants);
@@ -56,16 +67,38 @@ namespace Sapphire
         TrianglePipelineInfo.pColorAttachments = &m_RenderImage.ImageFormat;
         TrianglePipelineInfo.pDepthAttachmentFormat = &m_DepthImage.ImageFormat;
         TrianglePipelineInfo.Wireframe = false;
-        TrianglePipelineInfo.DescriptorCount = 1;
-        TrianglePipelineInfo.pDescriptors = &m_GraphicsSetLayout;
+        TrianglePipelineInfo.DescriptorCount = 2;
+        TrianglePipelineInfo.pDescriptors = GraphicsDescriptors;
         TrianglePipelineInfo.PushConstantRangeCount = 1;
         TrianglePipelineInfo.pPushConstantRanges = &GraphicsConstantRange;
 
         m_GraphicsPipeline = CreateSharedPtr<GraphicsPipeline>(m_RenderContext, TrianglePipelineInfo);
         m_DescriptorAllocator = CreateSharedPtr<DescriptorAllocator>(m_RenderContext);
 
-        MeshData MonkeyMeshData = ModelImporter::Import("Resources/Models/monkey.glb");
-        m_MonkeyMesh = m_GPUMemoryAllocator->UploadMesh(MonkeyMeshData);
+        auto ModelData = ModelImporter::Import("Resources/Models/sponza/Sponza.gltf");
+        for (auto& Mesh : ModelData.MeshDatas)
+            m_Meshes.push_back({ m_GPUMemoryAllocator->UploadMesh(Mesh), Mesh.MaterialIndex });
+
+        m_ModelTextures.resize(ModelData.MaterialDatas.size());
+
+        for (const auto& Material : ModelData.MaterialDatas)
+        {
+            std::string MaterialPath = std::string("Resources/Models/sponza/") + Material.DiffuseTexPath;
+
+            if (std::filesystem::exists(MaterialPath) && !std::filesystem::is_directory(MaterialPath))
+            {
+                BitmapImage DiffuseImage = ImageImporter::Import(MaterialPath);
+                
+                m_ModelTextures[Material.MaterialIndex].Texture = m_GPUMemoryAllocator->UploadTexture(DiffuseImage, 
+                    VK_FORMAT_R8G8B8A8_SRGB);
+
+                m_ModelTextures[Material.MaterialIndex].TextureSet = m_DescriptorAllocator->AllocateSet(m_TextureSetLayout);
+
+                DescriptorWriter Writer{};
+                Writer.WriteTexture(0, m_ModelTextures[Material.MaterialIndex].Texture);
+                Writer.WriteSet(m_RenderContext, m_ModelTextures[Material.MaterialIndex].TextureSet);
+            }
+        }
 
         m_GraphicsDescriptor = m_DescriptorAllocator->AllocateSet(m_GraphicsSetLayout);
 
@@ -73,7 +106,7 @@ namespace Sapphire
             VMA_MEMORY_USAGE_CPU_TO_GPU, sizeof(GraphicsDescriptor));
 
         DescriptorWriter Writer{};
-        Writer.AddBuffer(0, m_GraphicsUBO);
+        Writer.WriteUBO(0, m_GraphicsUBO);
         Writer.WriteSet(m_RenderContext, m_GraphicsDescriptor);
     }
 
@@ -81,11 +114,16 @@ namespace Sapphire
     {
         VkCheck(vkDeviceWaitIdle(m_RenderContext->GetDevice()));
 
+        vkDestroyDescriptorSetLayout(m_RenderContext->GetDevice(), m_TextureSetLayout, nullptr);
         vkDestroyDescriptorSetLayout(m_RenderContext->GetDevice(), m_GraphicsSetLayout, nullptr);
 
         m_GPUMemoryAllocator->DestroyBuffer(m_GraphicsUBO);
-        
-        m_GPUMemoryAllocator->DestroyMesh(m_MonkeyMesh);
+
+        for (auto& Texture : m_ModelTextures)
+            m_GPUMemoryAllocator->DestroyTexture(Texture.Texture);
+
+        for (auto& Mesh : m_Meshes)
+            m_GPUMemoryAllocator->DestroyMesh(Mesh.MeshBuffer);
 
         m_GPUMemoryAllocator->DestroyImage(m_DepthImage);
         m_GPUMemoryAllocator->DestroyImage(m_RenderImage);
@@ -149,9 +187,10 @@ namespace Sapphire
 
         VkCommandBuffer Cmd = m_CommandLists[FrameIndex]->Begin();
 
-        TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+        TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
         TransitionImageLayout(Cmd, m_DepthImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-            VK_IMAGE_ASPECT_DEPTH_BIT);
+            ImageSubresourceRange(VK_IMAGE_ASPECT_DEPTH_BIT));
 
         GraphicsDescriptor Desc{};
         Desc.View = m_Scene.GetCamera().GetViewMat();
@@ -176,18 +215,28 @@ namespace Sapphire
         VkRect2D GraphicsScissor = ScissorInfo((int32_t)m_RenderImage.ImageSize.width, (int32_t)m_RenderImage.ImageSize.height);
         vkCmdSetScissor(Cmd, 0, 1, &GraphicsScissor);
 
-        GraphicsConstants PushConstants{};
-        PushConstants.Model = glm::translate(glm::mat4(1.f), glm::vec3(0, 0, -5));
-        PushConstants.VertexBuffer = m_MonkeyMesh.VertexBuffer.BufferAddress;
+        for (auto& Mesh : m_Meshes)
+        {
+            GraphicsConstants PushConstants{};
+            PushConstants.Model = glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 0));
+            PushConstants.Model = glm::scale(PushConstants.Model, glm::vec3(2, 2, 2));
+            PushConstants.VertexBuffer = Mesh.MeshBuffer.VertexBuffer.BufferAddress;
 
-        vkCmdPushConstants(Cmd, m_GraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GraphicsConstants),
-            &PushConstants);
+            vkCmdPushConstants(Cmd, m_GraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GraphicsConstants),
+                &PushConstants);
+           
+            VkDescriptorSet Set[] =
+            {
+                m_GraphicsDescriptor,
+                m_ModelTextures[Mesh.MaterialIndex].TextureSet,
+            };
 
-        vkCmdBindDescriptorSets(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipelineLayout(), 0, 1, &m_GraphicsDescriptor,
-            0, nullptr);
+            vkCmdBindDescriptorSets(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline->GetPipelineLayout(), 0, 2, Set,
+                0, nullptr);
 
-        vkCmdBindIndexBuffer(Cmd, m_MonkeyMesh.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(Cmd, 2904, 1, 0, 0, 0);
+            vkCmdBindIndexBuffer(Cmd, Mesh.MeshBuffer.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdDrawIndexed(Cmd, Mesh.MeshBuffer.DrawCount, 1, 0, 0, 0);
+        }
 
         vkCmdEndRendering(Cmd);
 
@@ -202,12 +251,15 @@ namespace Sapphire
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), Cmd);
         vkCmdEndRendering(Cmd);
 
-        TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-        TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+        TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
+        TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
 
         BlitImage(Cmd, m_RenderImage, { .Image = m_Swapchain->GetImage(ImageIndex), .ImageFormat = m_Swapchain->GetFormat().format, .ImageSize = m_Swapchain->GetExtent() });
 
-        TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+        TransitionImageLayout(Cmd, m_Swapchain->GetImage(ImageIndex), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
 
         m_CommandLists[FrameIndex]->Submit(m_Swapchain->GetSemaphore(FrameIndex));
         m_Swapchain->Present(m_CommandLists[FrameIndex]);

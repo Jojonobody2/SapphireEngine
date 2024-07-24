@@ -33,6 +33,18 @@ namespace Sapphire
         VkDeviceAddress VertexBuffer;
     };
 
+    struct TexturedMesh
+    {
+        GPUMeshBuffer MeshBuffer;
+        uint32_t MaterialIndex;
+    };
+
+    struct MeshTexture
+    {
+        GPUTexture Texture;
+        VkDescriptorSet TextureSet;
+    };
+
     class Renderer
     {
     public:
@@ -55,13 +67,16 @@ namespace Sapphire
         GPUImage m_RenderImage{};
         GPUImage m_DepthImage{};
 
-        GPUMeshBuffer m_MonkeyMesh{};
+        std::vector<TexturedMesh> m_Meshes{};
+        std::vector<MeshTexture> m_ModelTextures{};
 
         Scene m_Scene{};
 
         VkDescriptorSetLayout m_GraphicsSetLayout{};
         VkDescriptorSet m_GraphicsDescriptor{};
         GPUBuffer m_GraphicsUBO{};
+
+        VkDescriptorSetLayout m_TextureSetLayout{};
 
         VkDescriptorPool m_ImGuiPool{};
 

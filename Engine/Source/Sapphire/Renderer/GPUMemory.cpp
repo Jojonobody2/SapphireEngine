@@ -141,6 +141,22 @@ namespace Sapphire
         vkCmdCopyBuffer(Cmd, Src.Buffer, Dst.Buffer, 1, &BufferCopy);
     }
 
+    void GPUMemoryAllocator::CopyBufferToImage(VkCommandBuffer Cmd, const GPUBuffer& Src, const GPUImage& Dst)
+    {
+        VkBufferImageCopy BufferImageCopy{};
+        BufferImageCopy.bufferOffset = 0;
+        BufferImageCopy.bufferRowLength = 0;
+        BufferImageCopy.bufferImageHeight = 0;
+        BufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        BufferImageCopy.imageSubresource.baseArrayLayer = 0;
+        BufferImageCopy.imageSubresource.layerCount = 1;
+        BufferImageCopy.imageSubresource.mipLevel = 0;
+        BufferImageCopy.imageOffset = { 0, 0 };
+        BufferImageCopy.imageExtent = { Dst.ImageSize.width, Dst.ImageSize.height, 1 };
+
+        vkCmdCopyBufferToImage(Cmd, Src.Buffer, Dst.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
+    }
+
     GPUMeshBuffer GPUMemoryAllocator::UploadMesh(MeshData& MeshData)
     {
         GPUMeshBuffer MeshBuffer{};
@@ -168,6 +184,8 @@ namespace Sapphire
 
         DestroyBuffer(StagingBuffer);
 
+        MeshBuffer.DrawCount = MeshData.Indices.size();
+
         return MeshBuffer;
     }
 
@@ -175,5 +193,138 @@ namespace Sapphire
     {
         DestroyBuffer(MeshBuffer.IndexBuffer);
         DestroyBuffer(MeshBuffer.VertexBuffer);
+    }
+
+    GPUTexture GPUMemoryAllocator::UploadTexture(BitmapImage& Image, VkFormat Format)
+    {
+        GPUTexture Texture{};
+        
+        Texture.MipLevels = (uint32_t)std::floor(std::log2(std::max(Image.Width, Image.Height))) + 1;
+
+        uint32_t ImageSize = Image.Pixels.size() * sizeof(uint8_t);
+
+        GPUBuffer StagingBuffer = AllocateBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, ImageSize);
+        CopyDataToHost(StagingBuffer, Image.Pixels.data(), ImageSize);
+
+        Texture.Image = AllocateImage({ Image.Width, Image.Height }, Format, VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT, 0,
+                Texture.MipLevels));
+
+        SharedPtr<CommandList> UploadCmdList = CreateSharedPtr<CommandList>(m_RenderContext);
+
+        UploadCmdList->Wait();
+        VkCommandBuffer Cmd = UploadCmdList->Begin();
+        {
+            TransitionImageLayout(Cmd, Texture.Image.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT, 0, Texture.MipLevels));
+            CopyBufferToImage(Cmd, StagingBuffer, Texture.Image);
+            GenerateMipmaps(Cmd, Texture);
+            TransitionImageLayout(Cmd, Texture.Image.Image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT, 0, Texture.MipLevels));
+        }
+        UploadCmdList->Submit(nullptr);
+        UploadCmdList->Wait();
+
+        DestroyBuffer(StagingBuffer);
+
+        VkSamplerCreateInfo SamplerCreateInfo{};
+        SamplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        SamplerCreateInfo.pNext = nullptr;
+        SamplerCreateInfo.flags = 0;
+        SamplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+        SamplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+        SamplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        SamplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        SamplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        SamplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        SamplerCreateInfo.anisotropyEnable = VK_FALSE;
+        SamplerCreateInfo.maxAnisotropy = 0.f;
+        SamplerCreateInfo.compareEnable = VK_FALSE;
+        SamplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+        SamplerCreateInfo.mipLodBias = -0.7f;
+        SamplerCreateInfo.minLod = 0.f;
+        SamplerCreateInfo.maxLod = (float)Texture.MipLevels;
+        SamplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        SamplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+
+        VkCheck(vkCreateSampler(m_RenderContext->GetDevice(), &SamplerCreateInfo, nullptr, &Texture.Sampler));
+
+        return Texture;
+    }
+
+    void GPUMemoryAllocator::DestroyTexture(const GPUTexture& Texture)
+    {
+        vkDestroySampler(m_RenderContext->GetDevice(), Texture.Sampler, nullptr);
+        DestroyImage(Texture.Image);
+    }
+
+    void GPUMemoryAllocator::GenerateMipmaps(VkCommandBuffer Cmd, const GPUTexture& Texture)
+    {
+        VkExtent2D CurrentSize = Texture.Image.ImageSize;
+
+        for (int Mip = 0; Mip < Texture.MipLevels; Mip++)
+        {
+            VkExtent2D HalfSize = { CurrentSize.width / 2, CurrentSize.height / 2 };
+
+            VkImageMemoryBarrier2 ImageMemoryBarrier{};
+            ImageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            ImageMemoryBarrier.pNext = nullptr;
+            ImageMemoryBarrier.srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+            ImageMemoryBarrier.srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT;
+            ImageMemoryBarrier.dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+            ImageMemoryBarrier.dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+            ImageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            ImageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            ImageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            ImageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            ImageMemoryBarrier.image = Texture.Image.Image;
+            ImageMemoryBarrier.subresourceRange = ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT);
+            ImageMemoryBarrier.subresourceRange.levelCount = 1;
+            ImageMemoryBarrier.subresourceRange.baseMipLevel = Mip;
+
+            VkDependencyInfo ImageDependencyInfo{};
+            ImageDependencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+            ImageDependencyInfo.pNext = nullptr;
+            ImageDependencyInfo.imageMemoryBarrierCount = 1;
+            ImageDependencyInfo.pImageMemoryBarriers = &ImageMemoryBarrier;
+
+            vkCmdPipelineBarrier2(Cmd, &ImageDependencyInfo);
+
+            if (Mip < Texture.MipLevels - 1)
+            {
+                VkImageBlit2 BlitRegion{};
+                BlitRegion.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+                BlitRegion.pNext = nullptr;
+                BlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                BlitRegion.srcSubresource.baseArrayLayer = 0;
+                BlitRegion.srcSubresource.layerCount = 1;
+                BlitRegion.srcSubresource.mipLevel = Mip;
+                BlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                BlitRegion.dstSubresource.baseArrayLayer = 0;
+                BlitRegion.dstSubresource.layerCount = 1;
+                BlitRegion.dstSubresource.mipLevel = Mip + 1;
+                BlitRegion.srcOffsets[1].x = (int32_t)CurrentSize.width;
+                BlitRegion.srcOffsets[1].y = (int32_t)CurrentSize.height;
+                BlitRegion.srcOffsets[1].z = 1;
+                BlitRegion.dstOffsets[1].x = (int32_t)HalfSize.width;
+                BlitRegion.dstOffsets[1].y = (int32_t)HalfSize.height;
+                BlitRegion.dstOffsets[1].z = 1;
+
+                VkBlitImageInfo2 BlitImageInfo{};
+                BlitImageInfo.sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+                BlitImageInfo.pNext = nullptr;
+                BlitImageInfo.srcImage = Texture.Image.Image;
+                BlitImageInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                BlitImageInfo.dstImage = Texture.Image.Image;
+                BlitImageInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+                BlitImageInfo.regionCount = 1;
+                BlitImageInfo.pRegions = &BlitRegion;
+                BlitImageInfo.filter = VK_FILTER_LINEAR;
+
+                vkCmdBlitImage2(Cmd, &BlitImageInfo);
+
+                CurrentSize = HalfSize;
+            }
+        }
     }
 }

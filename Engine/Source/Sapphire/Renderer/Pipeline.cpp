@@ -128,8 +128,14 @@ namespace Sapphire
         DepthStencilStateCreateInfo.maxDepthBounds = 1.f;
 
         VkPipelineColorBlendAttachmentState ColorBlendAttachmentState{};
-        ColorBlendAttachmentState.blendEnable = VK_FALSE;
+        ColorBlendAttachmentState.blendEnable = VK_TRUE;
         ColorBlendAttachmentState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;;
+        ColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+        ColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        ColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        ColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+        ColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        ColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
 
         VkPipelineColorBlendStateCreateInfo ColorBlendStateCreateInfo{};
         ColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;

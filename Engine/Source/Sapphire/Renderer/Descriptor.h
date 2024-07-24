@@ -17,6 +17,7 @@ namespace Sapphire
 		DescriptorSetLayoutBuilder() { Clear(); }
 
 		void AddUBO(uint32_t Binding, VkShaderStageFlags ShaderStages);
+		void AddTexture(uint32_t Binding);
 
 		void Clear();
 
@@ -45,14 +46,16 @@ namespace Sapphire
 	public:
 		DescriptorWriter() { Clear(); }
 
-		void AddBuffer(uint32_t Binding, const GPUBuffer& Buffer, uint32_t Offset = 0);
+		void WriteUBO(uint32_t Binding, const GPUBuffer& Buffer, uint32_t Offset = 0);
+		void WriteTexture(uint32_t Binding, const GPUTexture& Texture);
 
-		void WriteSet(const SharedPtr<RenderContext> RenderContext, VkDescriptorSet Set);
+		void WriteSet(const SharedPtr<RenderContext> RenderContext, VkDescriptorSet Set);;
 
 		void Clear();
 
 	private:
 		std::vector<VkDescriptorBufferInfo> m_BufferInfos{};
+		std::vector<VkDescriptorImageInfo> m_ImageInfos{};
 		std::vector<VkWriteDescriptorSet> m_Writes{};
 	};
 }

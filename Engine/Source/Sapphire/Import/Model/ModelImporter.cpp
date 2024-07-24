@@ -4,7 +4,7 @@
 
 namespace Sapphire
 {
-    MeshData ModelImporter::Import(const std::filesystem::path& Path)
+    ModelData ModelImporter::Import(const std::filesystem::path& Path)
     {
         return AssimpModelImporter::Import(Path);
     }

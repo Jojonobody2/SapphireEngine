@@ -170,7 +170,7 @@ namespace Sapphire
         return Indices;
     }
 
-    void TransitionImageLayout(VkCommandBuffer Cmd, VkImage Image, VkImageLayout Old, VkImageLayout New, VkImageAspectFlags ImageAspect)
+    void TransitionImageLayout(VkCommandBuffer Cmd, VkImage Image, VkImageLayout Old, VkImageLayout New, VkImageSubresourceRange ImageSubresourceRange)
     {
         VkImageMemoryBarrier2 ImageBarrier{};
         ImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -181,7 +181,7 @@ namespace Sapphire
         ImageBarrier.dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
         ImageBarrier.oldLayout = Old;
         ImageBarrier.newLayout = New;
-        ImageBarrier.subresourceRange = ImageSubresourceRange(ImageAspect);
+        ImageBarrier.subresourceRange = ImageSubresourceRange;
         ImageBarrier.image = Image;
 
         VkDependencyInfo DependencyInfo{};

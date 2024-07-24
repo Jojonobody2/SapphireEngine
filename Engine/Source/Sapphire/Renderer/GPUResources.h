@@ -34,5 +34,13 @@ namespace Sapphire
     {
         GPUBufferAddressable VertexBuffer;
         GPUBuffer IndexBuffer;
+        uint32_t DrawCount;
+    };
+
+    struct GPUTexture
+    {
+        GPUImage Image;
+        VkSampler Sampler;
+        uint32_t MipLevels;
     };
 }

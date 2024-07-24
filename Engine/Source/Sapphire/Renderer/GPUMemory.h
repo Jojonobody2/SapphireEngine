@@ -4,6 +4,7 @@
 #include "GPUResources.h"
 #include "Sapphire/Core/Base.h"
 #include "Sapphire/Import/Model/ModelImporter.h"
+#include "Sapphire/Import/Image/ImageImporter.h"
 
 #include "../../ThirdParty/VulkanMemoryAllocator/include/vk_mem_alloc.h"
 #include <vulkan/vulkan.h>
@@ -29,9 +30,15 @@ namespace Sapphire
         void CopyDataToHost(const GPUBuffer& Buffer, void* pData, size_t DataSize, size_t Offset = 0);
         static void CopyBufferToBuffer(VkCommandBuffer Cmd, const GPUBuffer& Src, const GPUBuffer& Dst, size_t SrcOffset = 0,
                                 size_t DstOffset = 0);
+        static void CopyBufferToImage(VkCommandBuffer Cmd, const GPUBuffer& Src, const GPUImage& Dst);
 
         GPUMeshBuffer UploadMesh(MeshData& ModelData);
         void DestroyMesh(const GPUMeshBuffer& MeshBuffer);
+
+        GPUTexture UploadTexture(BitmapImage& Image, VkFormat Format);
+        void DestroyTexture(const GPUTexture& Texture);
+
+        static void GenerateMipmaps(VkCommandBuffer Cmd, const GPUTexture& Texture);
 
     private:
         VmaAllocator m_Allocator{};

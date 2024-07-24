@@ -15,6 +15,17 @@ namespace Sapphire
 		BindingInfo.stageFlags = ShaderStages;
 	}
 
+	void DescriptorSetLayoutBuilder::AddTexture(uint32_t Binding)
+	{
+		m_Bindings.push_back(VkDescriptorSetLayoutBinding{});
+
+		VkDescriptorSetLayoutBinding& BindingInfo = m_Bindings[m_Bindings.size() - 1];
+		BindingInfo.binding = Binding;
+		BindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		BindingInfo.descriptorCount = 1;
+		BindingInfo.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	}
+
 	void DescriptorSetLayoutBuilder::Clear()
 	{
 		m_Bindings.clear();
@@ -41,7 +52,8 @@ namespace Sapphire
 
 		VkDescriptorPoolSize PoolSizes[] =
 		{
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10
+			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10,
+			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000,
 		};
 
 		VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo{};
@@ -82,7 +94,7 @@ namespace Sapphire
 		m_Writes.clear();
 	}
 
-	void DescriptorWriter::AddBuffer(uint32_t Binding, const GPUBuffer& Buffer, uint32_t Offset)
+	void DescriptorWriter::WriteUBO(uint32_t Binding, const GPUBuffer& Buffer, uint32_t Offset)
 	{
 		m_BufferInfos.push_back(VkDescriptorBufferInfo{});
 
@@ -100,6 +112,26 @@ namespace Sapphire
 		SetWrite.descriptorCount = 1;
 		SetWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		SetWrite.pBufferInfo = &BufferInfo;
+	}
+
+	void DescriptorWriter::WriteTexture(uint32_t Binding, const GPUTexture& Texture)
+	{
+		m_ImageInfos.push_back(VkDescriptorImageInfo{});
+
+		VkDescriptorImageInfo& ImageInfo = m_ImageInfos[m_ImageInfos.size() - 1];
+		ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		ImageInfo.imageView = Texture.Image.ImageView;
+		ImageInfo.sampler = Texture.Sampler;
+
+		m_Writes.push_back(VkWriteDescriptorSet{});
+
+		VkWriteDescriptorSet& SetWrite = m_Writes[m_Writes.size() - 1];
+		SetWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		SetWrite.pNext = nullptr;
+		SetWrite.dstBinding = Binding;
+		SetWrite.descriptorCount = 1;
+		SetWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		SetWrite.pImageInfo = &ImageInfo;
 	}
 
 	void DescriptorWriter::WriteSet(const SharedPtr<RenderContext> RenderContext, VkDescriptorSet Set)

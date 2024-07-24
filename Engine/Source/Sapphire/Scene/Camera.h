@@ -14,7 +14,7 @@ namespace Sapphire
         void Rotate(float DX, float DZ);
 		const glm::vec3& GetPos() { return m_Pos; }
 
-		const glm::mat4& GetViewMat() { return m_ViewMat; }
+		const glm::mat4& GetViewMat();
 
 	private:
         glm::vec3 m_Pos{};
