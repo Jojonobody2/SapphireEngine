@@ -1,6 +1,7 @@
 #include "Camera.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 namespace Sapphire
 {
@@ -43,7 +44,11 @@ namespace Sapphire
     void Camera::Rotate(float DX, float DZ)
     {
         m_Pitch += DX;
+        m_Pitch = std::clamp(m_Pitch, -89.f, 89.f);
+
         m_Yaw += DZ;
+        if (m_Yaw > 360.f) m_Yaw -= 360.f;
+        if (m_Yaw < -360.f) m_Yaw += 360.f;
     }
 
     const glm::mat4& Camera::GetViewMat()

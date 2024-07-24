@@ -14,7 +14,7 @@ namespace Sapphire
         const glm::mat4& GetProjMat() { return m_ProjMat; }
 
     private:
-        Camera m_Camera{};
+        Camera m_Camera;
         glm::mat4 m_ProjMat{};
     };
 }

@@ -43,6 +43,8 @@ namespace Sapphire
 		VkDescriptorSetLayout SetLayout{};
 		VkCheck(vkCreateDescriptorSetLayout(RenderContext->GetDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &SetLayout));
 
+        Clear();
+
 		return SetLayout;
 	}
 
@@ -134,11 +136,13 @@ namespace Sapphire
 		SetWrite.pImageInfo = &ImageInfo;
 	}
 
-	void DescriptorWriter::WriteSet(const SharedPtr<RenderContext> RenderContext, VkDescriptorSet Set)
+	void DescriptorWriter::WriteSet(const SharedPtr<RenderContext>& RenderContext, VkDescriptorSet Set)
 	{
 		for (auto& Write : m_Writes)
 			Write.dstSet = Set;
 
 		vkUpdateDescriptorSets(RenderContext->GetDevice(), (uint32_t)m_Writes.size(), m_Writes.data(), 0, nullptr);
-	}
+
+        Clear();
+    }
 }

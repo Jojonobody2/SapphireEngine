@@ -19,7 +19,7 @@ namespace Sapphire
 	private:
         glm::vec3 m_Pos{};
         float m_Pitch = 0.f;
-        float m_Yaw = -90.f;
+        float m_Yaw = 0.f;
 
         const glm::vec3 m_UpDir = { 0.f, 1.f, 0.f };
 

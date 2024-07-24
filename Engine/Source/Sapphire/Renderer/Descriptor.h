@@ -49,7 +49,7 @@ namespace Sapphire
 		void WriteUBO(uint32_t Binding, const GPUBuffer& Buffer, uint32_t Offset = 0);
 		void WriteTexture(uint32_t Binding, const GPUTexture& Texture);
 
-		void WriteSet(const SharedPtr<RenderContext> RenderContext, VkDescriptorSet Set);;
+		void WriteSet(const SharedPtr<RenderContext>& RenderContext, VkDescriptorSet Set);;
 
 		void Clear();
 

@@ -9,7 +9,7 @@ namespace Sapphire
     class CommandList
     {
     public:
-        explicit CommandList(const SharedPtr<RenderContext>& RenderContext);
+        explicit CommandList(const SharedPtr<RenderContext>& RenderContext, bool SignaledFence = false);
         virtual ~CommandList();
 
         [[nodiscard]] VkSemaphore GetSemaphore() const { return m_Semaphore; }

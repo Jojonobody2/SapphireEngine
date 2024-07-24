@@ -8,6 +8,7 @@
 namespace Sapphire
 {
     Scene::Scene()
+        : m_Camera(glm::vec3(0, 2, 0))
     {
         m_ProjMat = glm::perspective(glm::radians(45.f),
                          (float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(),

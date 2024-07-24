@@ -5,7 +5,7 @@
 
 namespace Sapphire
 {
-    CommandList::CommandList(const SharedPtr<RenderContext>& RenderContext)
+    CommandList::CommandList(const SharedPtr<RenderContext>& RenderContext, bool SignaledFence)
     {
         m_RenderContext = RenderContext;
 
@@ -15,7 +15,7 @@ namespace Sapphire
         VkCommandBufferAllocateInfo CmdAllocInfo = CommandBufferAllocInfo(m_CommandPool);
         VkCheck(vkAllocateCommandBuffers(m_RenderContext->GetDevice(), &CmdAllocInfo, &m_CommandBuffer));
 
-        VkFenceCreateInfo FenceCreateInfo = FenceInfo(VK_FENCE_CREATE_SIGNALED_BIT);
+        VkFenceCreateInfo FenceCreateInfo = FenceInfo(SignaledFence ? VK_FENCE_CREATE_SIGNALED_BIT : 0);
         VkCheck(vkCreateFence(m_RenderContext->GetDevice(), &FenceCreateInfo, nullptr, &m_Fence));
 
         VkSemaphoreCreateInfo SemaphoreCreateInfo = SemaphoreInfo();

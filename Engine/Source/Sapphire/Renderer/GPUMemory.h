@@ -35,6 +35,7 @@ namespace Sapphire
         GPUMeshBuffer UploadMesh(MeshData& ModelData);
         void DestroyMesh(const GPUMeshBuffer& MeshBuffer);
 
+        GPUTexture AllocateEmptyTexture(VkFormat Format, VkExtent2D Size);
         GPUTexture UploadTexture(BitmapImage& Image, VkFormat Format);
         void DestroyTexture(const GPUTexture& Texture);
 

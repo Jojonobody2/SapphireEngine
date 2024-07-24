@@ -175,7 +175,6 @@ namespace Sapphire
 
         SharedPtr<CommandList> UploadCmdList = CreateSharedPtr<CommandList>(m_RenderContext);
 
-        UploadCmdList->Wait();
         VkCommandBuffer Cmd = UploadCmdList->Begin();
         CopyBufferToBuffer(Cmd, StagingBuffer, MeshBuffer.VertexBuffer.Buffer);
         CopyBufferToBuffer(Cmd, StagingBuffer, MeshBuffer.IndexBuffer, MeshData.Vertices.size() * sizeof(Vertex));
@@ -212,7 +211,6 @@ namespace Sapphire
 
         SharedPtr<CommandList> UploadCmdList = CreateSharedPtr<CommandList>(m_RenderContext);
 
-        UploadCmdList->Wait();
         VkCommandBuffer Cmd = UploadCmdList->Begin();
         {
             TransitionImageLayout(Cmd, Texture.Image.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -326,5 +324,37 @@ namespace Sapphire
                 CurrentSize = HalfSize;
             }
         }
+    }
+
+    GPUTexture GPUMemoryAllocator::AllocateEmptyTexture(VkFormat Format, VkExtent2D Size)
+    {
+        GPUTexture Texture{};
+        Texture.MipLevels = 1;
+
+        Texture.Image = AllocateImage(Size, Format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT, 0,
+                                                                                                                                                                 Texture.MipLevels));
+        VkSamplerCreateInfo SamplerCreateInfo{};
+        SamplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+        SamplerCreateInfo.pNext = nullptr;
+        SamplerCreateInfo.flags = 0;
+        SamplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+        SamplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+        SamplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        SamplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        SamplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        SamplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        SamplerCreateInfo.anisotropyEnable = VK_FALSE;
+        SamplerCreateInfo.maxAnisotropy = 0.f;
+        SamplerCreateInfo.compareEnable = VK_FALSE;
+        SamplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+        SamplerCreateInfo.mipLodBias = 0.f;
+        SamplerCreateInfo.minLod = 0.f;
+        SamplerCreateInfo.maxLod = 0.f;
+        SamplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+        SamplerCreateInfo.unnormalizedCoordinates = VK_FALSE;
+
+        VkCheck(vkCreateSampler(m_RenderContext->GetDevice(), &SamplerCreateInfo, nullptr, &Texture.Sampler));
+
+        return Texture;
     }
 }

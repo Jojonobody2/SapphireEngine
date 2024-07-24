@@ -36,13 +36,18 @@ namespace Sapphire
     struct TexturedMesh
     {
         GPUMeshBuffer MeshBuffer;
-        uint32_t MaterialIndex;
+        uint32_t MaterialIndex{};
     };
 
     struct MeshTexture
     {
         GPUTexture Texture;
         VkDescriptorSet TextureSet;
+    };
+
+    struct GBuffer
+    {
+        GPUTexture AlbedoImage{};
     };
 
     class Renderer
@@ -59,7 +64,6 @@ namespace Sapphire
         SharedPtr<RenderContext> m_RenderContext;
         SharedPtr<Swapchain> m_Swapchain;
         std::vector<SharedPtr<CommandList>> m_CommandLists;
-        SharedPtr<GraphicsPipeline> m_GraphicsPipeline{};
 
         SharedPtr<GPUMemoryAllocator> m_GPUMemoryAllocator{};
         SharedPtr<DescriptorAllocator> m_DescriptorAllocator{};
@@ -67,22 +71,31 @@ namespace Sapphire
         GPUImage m_RenderImage{};
         GPUImage m_DepthImage{};
 
+        GBuffer m_GBuffer{};
+
         std::vector<TexturedMesh> m_Meshes{};
         std::vector<MeshTexture> m_ModelTextures{};
 
         Scene m_Scene{};
 
-        VkDescriptorSetLayout m_GraphicsSetLayout{};
-        VkDescriptorSet m_GraphicsDescriptor{};
-        GPUBuffer m_GraphicsUBO{};
+        //geometry pass stuff
+        SharedPtr<GraphicsPipeline> m_GeometryPipeline{};
+        VkDescriptorSetLayout m_GeometryMatricesSetLayout{};
+        std::vector<VkDescriptorSet> m_GeometryMatricesSets{};
+        std::vector<GPUBuffer> m_GeometryMatricesUBOs{};
+        VkDescriptorSetLayout m_GeometryMaterialSetLayout{};
 
-        VkDescriptorSetLayout m_TextureSetLayout{};
+        //lighting pass stuff
+        SharedPtr<GraphicsPipeline> m_LightingPipeline{};
+        VkDescriptorSetLayout m_LightingGBufferSetLayout{};
+        VkDescriptorSet m_LightingGBufferSet{};
 
         VkDescriptorPool m_ImGuiPool{};
 
         uint32_t FrameIndex{};
 
     private:
+        void CreatePipelines();
         void InitImGui();
     };
 }
