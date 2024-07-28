@@ -197,7 +197,7 @@ namespace Sapphire
     GPUTexture GPUMemoryAllocator::UploadTexture(BitmapImage& Image, VkFormat Format)
     {
         GPUTexture Texture{};
-        
+
         Texture.MipLevels = (uint32_t)std::floor(std::log2(std::max(Image.Width, Image.Height))) + 1;
 
         uint32_t ImageSize = Image.Pixels.size() * sizeof(uint8_t);
@@ -239,7 +239,7 @@ namespace Sapphire
         SamplerCreateInfo.maxAnisotropy = 0.f;
         SamplerCreateInfo.compareEnable = VK_FALSE;
         SamplerCreateInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-        SamplerCreateInfo.mipLodBias = -0.7f;
+        SamplerCreateInfo.mipLodBias = 0.f;
         SamplerCreateInfo.minLod = 0.f;
         SamplerCreateInfo.maxLod = (float)Texture.MipLevels;
         SamplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
@@ -326,12 +326,12 @@ namespace Sapphire
         }
     }
 
-    GPUTexture GPUMemoryAllocator::AllocateEmptyTexture(VkFormat Format, VkExtent2D Size)
+    GPUTexture GPUMemoryAllocator::AllocateEmptyTexture(VkFormat Format, VkExtent2D Size, VkImageUsageFlags ImageUsage, VkImageAspectFlags ImageAspect)
     {
         GPUTexture Texture{};
         Texture.MipLevels = 1;
 
-        Texture.Image = AllocateImage(Size, Format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT, 0,
+        Texture.Image = AllocateImage(Size, Format, ImageUsage | VK_IMAGE_USAGE_SAMPLED_BIT, ImageSubresourceRange(ImageAspect, 0,
                                                                                                                                                                  Texture.MipLevels));
         VkSamplerCreateInfo SamplerCreateInfo{};
         SamplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;

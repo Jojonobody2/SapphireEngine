@@ -3,6 +3,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/GltfMaterial.h>
 
 #include "Sapphire/Logging/Logger.h"
 
@@ -29,9 +30,13 @@ namespace Sapphire
 				aiVector3D Pos = Mesh->mVertices[i];
 				aiVector3D Nml = Mesh->mNormals[i];
 				aiVector3D UV = Mesh->mTextureCoords[0][i];
+                aiVector3D Tan = Mesh->mTangents[i];
+                aiVector3D Bitan = Mesh->mBitangents[i];
 
 				Vertex.PosUVx = glm::vec4(Pos.x, Pos.y, Pos.z, UV.x);
 				Vertex.NmlUVy = glm::vec4(Nml.x, Nml.y, Nml.z, UV.y);
+                Vertex.Tan = glm::vec3(Tan.x, Tan.y, Tan.z);
+                Vertex.Bitan = glm::vec3(Bitan.x, Bitan.y, Bitan.z);
 
 				Data.Vertices.push_back(Vertex);
 			}
@@ -57,10 +62,16 @@ namespace Sapphire
 		{
 			aiMaterial* Material = pScene->mMaterials[i];
 
-			aiString TexturePath;
-			aiGetMaterialTexture(Material, aiTextureType_DIFFUSE, 0, &TexturePath);
+			aiString DiffuseTexPath;
+			aiGetMaterialTexture(Material, aiTextureType_DIFFUSE, 0, &DiffuseTexPath);
 
-			MaterialDatas.push_back({ TexturePath.C_Str(), i });
+            aiString NormalTexPath;
+            aiGetMaterialTexture(Material, aiTextureType_NORMALS, 0, &NormalTexPath);
+
+            aiString PBRTexPath;
+            aiGetMaterialTexture(Material, AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &PBRTexPath);
+
+			MaterialDatas.push_back({ DiffuseTexPath.C_Str(), NormalTexPath.C_Str(), PBRTexPath.C_Str(), i });
 		}
 
 		return { MeshDatas, MaterialDatas };

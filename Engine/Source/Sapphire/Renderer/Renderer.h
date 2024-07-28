@@ -11,6 +11,7 @@
 
 #include "Sapphire/Scene/Camera.h"
 #include "Sapphire/Scene/Scene.h"
+#include "Sapphire/Scene/Transform.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -42,12 +43,9 @@ namespace Sapphire
     struct MeshTexture
     {
         GPUTexture Texture;
+        GPUTexture NormalTex;
+        GPUTexture PBRTex;
         VkDescriptorSet TextureSet;
-    };
-
-    struct GBuffer
-    {
-        GPUTexture AlbedoImage{};
     };
 
     class Renderer
@@ -69,14 +67,16 @@ namespace Sapphire
         SharedPtr<DescriptorAllocator> m_DescriptorAllocator{};
 
         GPUImage m_RenderImage{};
-        GPUImage m_DepthImage{};
+        GPUTexture m_DepthImage{};
 
-        GBuffer m_GBuffer{};
+        GPUTexture m_DefaultTexture{};
 
         std::vector<TexturedMesh> m_Meshes{};
         std::vector<MeshTexture> m_ModelTextures{};
 
         Scene m_Scene{};
+
+        Transform m_Transform{};
 
         //geometry pass stuff
         SharedPtr<GraphicsPipeline> m_GeometryPipeline{};
@@ -84,11 +84,6 @@ namespace Sapphire
         std::vector<VkDescriptorSet> m_GeometryMatricesSets{};
         std::vector<GPUBuffer> m_GeometryMatricesUBOs{};
         VkDescriptorSetLayout m_GeometryMaterialSetLayout{};
-
-        //lighting pass stuff
-        SharedPtr<GraphicsPipeline> m_LightingPipeline{};
-        VkDescriptorSetLayout m_LightingGBufferSetLayout{};
-        VkDescriptorSet m_LightingGBufferSet{};
 
         VkDescriptorPool m_ImGuiPool{};
 

@@ -137,14 +137,19 @@ namespace Sapphire
         ColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
         ColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
 
+        std::vector<VkPipelineColorBlendAttachmentState> ColorBlendStates{};
+
+        for (uint32_t i = 0; i < GraphicsPipelineInfo.ColorAttachmentCount; i++)
+            ColorBlendStates.push_back(ColorBlendAttachmentState);
+
         VkPipelineColorBlendStateCreateInfo ColorBlendStateCreateInfo{};
         ColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         ColorBlendStateCreateInfo.pNext = nullptr;
         ColorBlendStateCreateInfo.flags = 0;
         ColorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
         ColorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY;
-        ColorBlendStateCreateInfo.attachmentCount = 1;
-        ColorBlendStateCreateInfo.pAttachments = &ColorBlendAttachmentState;
+        ColorBlendStateCreateInfo.attachmentCount = GraphicsPipelineInfo.ColorAttachmentCount;
+        ColorBlendStateCreateInfo.pAttachments = ColorBlendStates.data();
 
         VkDynamicState DynamicStates[] =
         {

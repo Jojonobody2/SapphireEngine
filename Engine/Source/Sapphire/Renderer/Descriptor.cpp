@@ -98,42 +98,38 @@ namespace Sapphire
 
 	void DescriptorWriter::WriteUBO(uint32_t Binding, const GPUBuffer& Buffer, uint32_t Offset)
 	{
-		m_BufferInfos.push_back(VkDescriptorBufferInfo{});
-
-		VkDescriptorBufferInfo& BufferInfo = m_BufferInfos[m_BufferInfos.size() - 1];
+		VkDescriptorBufferInfo& BufferInfo = m_BufferInfos.emplace_back(VkDescriptorBufferInfo{});
 		BufferInfo.buffer = Buffer.Buffer;
 		BufferInfo.offset = Offset;
 		BufferInfo.range = Buffer.BufferSize;
 
-		m_Writes.push_back(VkWriteDescriptorSet{});
-
-		VkWriteDescriptorSet& SetWrite = m_Writes[m_Writes.size() - 1];
+        VkWriteDescriptorSet SetWrite{};
 		SetWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		SetWrite.pNext = nullptr;
 		SetWrite.dstBinding = Binding;
 		SetWrite.descriptorCount = 1;
 		SetWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		SetWrite.pBufferInfo = &BufferInfo;
+
+        m_Writes.push_back(SetWrite);
 	}
 
 	void DescriptorWriter::WriteTexture(uint32_t Binding, const GPUTexture& Texture)
 	{
-		m_ImageInfos.push_back(VkDescriptorImageInfo{});
-
-		VkDescriptorImageInfo& ImageInfo = m_ImageInfos[m_ImageInfos.size() - 1];
+		VkDescriptorImageInfo& ImageInfo = m_ImageInfos.emplace_back(VkDescriptorImageInfo{});
 		ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		ImageInfo.imageView = Texture.Image.ImageView;
 		ImageInfo.sampler = Texture.Sampler;
 
-		m_Writes.push_back(VkWriteDescriptorSet{});
-
-		VkWriteDescriptorSet& SetWrite = m_Writes[m_Writes.size() - 1];
+        VkWriteDescriptorSet SetWrite{};
 		SetWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		SetWrite.pNext = nullptr;
 		SetWrite.dstBinding = Binding;
 		SetWrite.descriptorCount = 1;
 		SetWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		SetWrite.pImageInfo = &ImageInfo;
+
+        m_Writes.push_back(SetWrite);
 	}
 
 	void DescriptorWriter::WriteSet(const SharedPtr<RenderContext>& RenderContext, VkDescriptorSet Set)

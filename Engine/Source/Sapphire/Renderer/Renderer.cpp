@@ -30,13 +30,14 @@ namespace Sapphire
         m_RenderImage = m_GPUMemoryAllocator->AllocateImage(m_Swapchain->GetExtent(), VK_FORMAT_R16G16B16A16_SFLOAT,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
 
-        m_DepthImage = m_GPUMemoryAllocator->AllocateImage(m_Swapchain->GetExtent(), VK_FORMAT_D32_SFLOAT,
-            VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, ImageSubresourceRange(VK_IMAGE_ASPECT_DEPTH_BIT));
-
-        m_GBuffer.AlbedoImage = m_GPUMemoryAllocator->AllocateEmptyTexture(VK_FORMAT_R16G16B16A16_SFLOAT, m_Swapchain->GetExtent());
+        m_DepthImage = m_GPUMemoryAllocator->AllocateEmptyTexture(VK_FORMAT_D32_SFLOAT, m_Swapchain->GetExtent(), VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                                                  VK_IMAGE_ASPECT_DEPTH_BIT);
 
         CreatePipelines();
         InitImGui();
+
+        BitmapImage DefaultImage = ImageImporter::Import("Resources/Models/sponza/white.png");
+        m_DefaultTexture = m_GPUMemoryAllocator->UploadTexture(DefaultImage, VK_FORMAT_R8G8B8A8_UNORM);
 
         auto ModelData = ModelImporter::Import("Resources/Models/sponza/Sponza.gltf");
         for (auto& Mesh : ModelData.MeshDatas)
@@ -47,20 +48,49 @@ namespace Sapphire
         for (const auto& Material : ModelData.MaterialDatas)
         {
             std::string MaterialPath = std::string("Resources/Models/sponza/") + Material.DiffuseTexPath;
+            std::string NormalPath = std::string("Resources/Models/sponza/") + Material.NormalTexPath;
+            std::string PBRPath = std::string("Resources/Models/sponza/") + Material.PBRTexPath;
+
+            m_ModelTextures[Material.MaterialIndex].TextureSet = m_DescriptorAllocator->AllocateSet(m_GeometryMaterialSetLayout);
+
+            DescriptorWriter Writer{};
 
             if (std::filesystem::exists(MaterialPath) && !std::filesystem::is_directory(MaterialPath))
             {
                 BitmapImage DiffuseImage = ImageImporter::Import(MaterialPath);
 
                 m_ModelTextures[Material.MaterialIndex].Texture = m_GPUMemoryAllocator->UploadTexture(DiffuseImage,
-                                                                                                      VK_FORMAT_R8G8B8A8_SRGB);
-
-                m_ModelTextures[Material.MaterialIndex].TextureSet = m_DescriptorAllocator->AllocateSet(m_GeometryMaterialSetLayout);
-
-                DescriptorWriter Writer{};
+                                                                                                      VK_FORMAT_R8G8B8A8_UNORM);
                 Writer.WriteTexture(0, m_ModelTextures[Material.MaterialIndex].Texture);
-                Writer.WriteSet(m_RenderContext, m_ModelTextures[Material.MaterialIndex].TextureSet);
             }
+            else
+                Writer.WriteTexture(0, m_DefaultTexture);
+
+            if (std::filesystem::exists(NormalPath) && !std::filesystem::is_directory(NormalPath))
+            {
+                BitmapImage NormalImage = ImageImporter::Import(NormalPath);
+
+                m_ModelTextures[Material.MaterialIndex].NormalTex = m_GPUMemoryAllocator->UploadTexture(NormalImage,
+                                                                                                        VK_FORMAT_R8G8B8A8_UNORM);
+
+                Writer.WriteTexture(1, m_ModelTextures[Material.MaterialIndex].NormalTex);
+            }
+            else
+                Writer.WriteTexture(1, m_DefaultTexture);
+
+            if (std::filesystem::exists(PBRPath) && !std::filesystem::is_directory(PBRPath))
+            {
+                BitmapImage PBRImage = ImageImporter::Import(PBRPath);
+
+                m_ModelTextures[Material.MaterialIndex].PBRTex = m_GPUMemoryAllocator->UploadTexture(PBRImage,
+                                                                                                        VK_FORMAT_R8G8B8A8_UNORM);
+
+                Writer.WriteTexture(2, m_ModelTextures[Material.MaterialIndex].PBRTex);
+            }
+            else
+                Writer.WriteTexture(2, m_DefaultTexture);
+
+            Writer.WriteSet(m_RenderContext, m_ModelTextures[Material.MaterialIndex].TextureSet);
         }
     }
 
@@ -75,14 +105,21 @@ namespace Sapphire
             m_GPUMemoryAllocator->DestroyBuffer(GeometryUBO);
 
         for (auto& Texture : m_ModelTextures)
-            m_GPUMemoryAllocator->DestroyTexture(Texture.Texture);
+        {
+            if (Texture.Texture.Image.Image)
+                m_GPUMemoryAllocator->DestroyTexture(Texture.Texture);
+            if (Texture.NormalTex.Image.Image)
+                m_GPUMemoryAllocator->DestroyTexture(Texture.NormalTex);
+            if (Texture.PBRTex.Image.Image)
+                m_GPUMemoryAllocator->DestroyTexture(Texture.PBRTex);
+        }
 
         for (auto& Mesh : m_Meshes)
             m_GPUMemoryAllocator->DestroyMesh(Mesh.MeshBuffer);
 
-        m_GPUMemoryAllocator->DestroyTexture(m_GBuffer.AlbedoImage);
+        m_GPUMemoryAllocator->DestroyTexture(m_DefaultTexture);
 
-        m_GPUMemoryAllocator->DestroyImage(m_DepthImage);
+        m_GPUMemoryAllocator->DestroyTexture(m_DepthImage);
         m_GPUMemoryAllocator->DestroyImage(m_RenderImage);
 
         ImGui_ImplVulkan_Shutdown();
@@ -99,9 +136,9 @@ namespace Sapphire
 
         VkCommandBuffer Cmd = m_CommandLists[FrameIndex]->Begin();
 
-        TransitionImageLayout(Cmd, m_GBuffer.AlbedoImage.Image.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
-        TransitionImageLayout(Cmd, m_DepthImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+        TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                              ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
+        TransitionImageLayout(Cmd, m_DepthImage.Image.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
             ImageSubresourceRange(VK_IMAGE_ASPECT_DEPTH_BIT));
 
         GraphicsDescriptor Desc{};
@@ -111,27 +148,27 @@ namespace Sapphire
         m_GPUMemoryAllocator->CopyDataToHost(m_GeometryMatricesUBOs[FrameIndex], &Desc, sizeof(GraphicsDescriptor));
 
         VkClearColorValue ClearValue = { 1, 0, 1, 1 };
-        VkRenderingAttachmentInfo TriangleColorAttachmentInfo = ColorAttachmentInfo(m_GBuffer.AlbedoImage.Image.ImageView,
+        VkRenderingAttachmentInfo TriangleColorAttachmentInfo = ColorAttachmentInfo(m_RenderImage.ImageView,
                                                                                  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, &ClearValue);
-        VkRenderingAttachmentInfo GraphicsDepthAttachmentInfo = DepthAttachmentInfo(m_DepthImage.ImageView,
+        VkRenderingAttachmentInfo GraphicsDepthAttachmentInfo = DepthAttachmentInfo(m_DepthImage.Image.ImageView,
                                                                                  VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, true);
+
         VkRenderingInfo TriangleRenderingInfo = RenderingInfo(1, &TriangleColorAttachmentInfo, &GraphicsDepthAttachmentInfo);
 
         vkCmdBeginRendering(Cmd, &TriangleRenderingInfo);
 
         vkCmdBindPipeline(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_GeometryPipeline->GetPipeline());
 
-        VkViewport GraphicsViewport = ViewportInfo((float)m_GBuffer.AlbedoImage.Image.ImageSize.width, (float)m_GBuffer.AlbedoImage.Image.ImageSize.height);
+        VkViewport GraphicsViewport = ViewportInfo((float)m_RenderImage.ImageSize.width, (float)m_RenderImage.ImageSize.height);
         vkCmdSetViewport(Cmd, 0, 1, &GraphicsViewport);
 
-        VkRect2D GraphicsScissor = ScissorInfo((int32_t)m_GBuffer.AlbedoImage.Image.ImageSize.width, (int32_t)m_GBuffer.AlbedoImage.Image.ImageSize.height);
+        VkRect2D GraphicsScissor = ScissorInfo((int32_t)m_RenderImage.ImageSize.width, (int32_t)m_RenderImage.ImageSize.height);
         vkCmdSetScissor(Cmd, 0, 1, &GraphicsScissor);
 
         for (auto& Mesh : m_Meshes)
         {
             GraphicsConstants PushConstants{};
-            PushConstants.Model = glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 0));
-            PushConstants.Model = glm::scale(PushConstants.Model, glm::vec3(2, 2, 2));
+            PushConstants.Model = m_Transform.GetMat();
             PushConstants.VertexBuffer = Mesh.MeshBuffer.VertexBuffer.BufferAddress;
 
             vkCmdPushConstants(Cmd, m_GeometryPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GraphicsConstants),
@@ -149,33 +186,6 @@ namespace Sapphire
             vkCmdBindIndexBuffer(Cmd, Mesh.MeshBuffer.IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT32);
             vkCmdDrawIndexed(Cmd, Mesh.MeshBuffer.DrawCount, 1, 0, 0, 0);
         }
-
-        vkCmdEndRendering(Cmd);
-
-        TransitionImageLayout(Cmd, m_GBuffer.AlbedoImage.Image.Image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                              ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
-        TransitionImageLayout(Cmd, m_RenderImage.Image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                              ImageSubresourceRange(VK_IMAGE_ASPECT_COLOR_BIT));
-
-        VkRenderingAttachmentInfo DeferredColorAttachment = ColorAttachmentInfo(m_RenderImage.ImageView,
-                                                                                    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-        VkRenderingInfo DeferredRenderingInfo = RenderingInfo(1, &DeferredColorAttachment);
-
-        vkCmdBeginRendering(Cmd, &DeferredRenderingInfo);
-
-        vkCmdBindPipeline(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_LightingPipeline->GetPipeline());
-
-        VkViewport LightingViewport = ViewportInfo((float)m_RenderImage.ImageSize.width, -(float)m_RenderImage.ImageSize.height, 0,
-                                                   (float)m_RenderImage.ImageSize.height);
-        vkCmdSetViewport(Cmd, 0, 1, &LightingViewport);
-
-        VkRect2D LightingScissor = ScissorInfo((int32_t)m_RenderImage.ImageSize.width, (int32_t)m_RenderImage.ImageSize.height);
-        vkCmdSetScissor(Cmd, 0, 1, &LightingScissor);
-
-        vkCmdBindDescriptorSets(Cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_LightingPipeline->GetPipelineLayout(),
-                                0, 1, &m_LightingGBufferSet, 0, nullptr);
-
-        vkCmdDraw(Cmd, 3, 1, 0, 0);
 
         vkCmdEndRendering(Cmd);
 
@@ -220,6 +230,8 @@ namespace Sapphire
         m_GeometryMatricesSetLayout = DescriptorBuilder.Build(m_RenderContext);
 
         DescriptorBuilder.AddTexture(0);
+        DescriptorBuilder.AddTexture(1);
+        DescriptorBuilder.AddTexture(2);
         m_GeometryMaterialSetLayout = DescriptorBuilder.Build(m_RenderContext);
 
         VkDescriptorSetLayout GeometryDescriptors[] =
@@ -237,8 +249,8 @@ namespace Sapphire
         GeometryPipelineInfo.VertexShader = GeometryVS;
         GeometryPipelineInfo.FragmentShader = GeometryFS;
         GeometryPipelineInfo.ColorAttachmentCount = 1;
-        GeometryPipelineInfo.pColorAttachments = &m_GBuffer.AlbedoImage.Image.ImageFormat;
-        GeometryPipelineInfo.pDepthAttachmentFormat = &m_DepthImage.ImageFormat;
+        GeometryPipelineInfo.pColorAttachments = &m_RenderImage.ImageFormat;
+        GeometryPipelineInfo.pDepthAttachmentFormat = &m_DepthImage.Image.ImageFormat;
         GeometryPipelineInfo.Wireframe = false;
         GeometryPipelineInfo.DescriptorCount = 2;
         GeometryPipelineInfo.pDescriptors = GeometryDescriptors;
@@ -260,29 +272,6 @@ namespace Sapphire
             DescriptorWrite.WriteUBO(0, m_GeometryMatricesUBOs[i]);
             DescriptorWrite.WriteSet(m_RenderContext, m_GeometryMatricesSets[i]);
         }
-
-        //lighting pass
-
-        SharedPtr<Shader> LightingVS = CreateSharedPtr<Shader>("Resources/Shaders/Lighting.vert.spv", m_RenderContext);
-        SharedPtr<Shader> LightingFS = CreateSharedPtr<Shader>("Resources/Shaders/Lighting.frag.spv", m_RenderContext);
-
-        DescriptorBuilder.AddTexture(0);
-        m_LightingGBufferSetLayout = DescriptorBuilder.Build(m_RenderContext);
-
-        GraphicsPipelineInfo LightingPipelineInfo{};
-        LightingPipelineInfo.VertexShader = LightingVS;
-        LightingPipelineInfo.FragmentShader = LightingFS;
-        LightingPipelineInfo.ColorAttachmentCount = 1;
-        LightingPipelineInfo.pColorAttachments = &m_RenderImage.ImageFormat;
-        LightingPipelineInfo.DescriptorCount = 1;
-        LightingPipelineInfo.pDescriptors = &m_LightingGBufferSetLayout;
-
-        m_LightingPipeline = CreateSharedPtr<GraphicsPipeline>(m_RenderContext, LightingPipelineInfo);
-
-        m_LightingGBufferSet = m_DescriptorAllocator->AllocateSet(m_LightingGBufferSetLayout);
-
-        DescriptorWrite.WriteTexture(0, m_GBuffer.AlbedoImage);
-        DescriptorWrite.WriteSet(m_RenderContext, m_LightingGBufferSet);
     }
 
     void Renderer::InitImGui()

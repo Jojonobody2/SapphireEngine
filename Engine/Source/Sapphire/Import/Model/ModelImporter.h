@@ -10,6 +10,8 @@ namespace Sapphire
     {
         alignas(16) glm::vec4 PosUVx;
         alignas(16) glm::vec4 NmlUVy;
+        alignas(16) glm::vec3 Tan;
+        alignas(16) glm::vec3 Bitan;
     };
 
     struct MeshData
@@ -23,6 +25,8 @@ namespace Sapphire
     struct MaterialData
     {
         std::string DiffuseTexPath;
+        std::string NormalTexPath;
+        std::string PBRTexPath;
 
         uint32_t MaterialIndex;
     };

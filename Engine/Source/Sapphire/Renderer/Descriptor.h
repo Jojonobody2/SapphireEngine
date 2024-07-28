@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.h>
 
 #include <vector>
+#include <deque>
 
 namespace Sapphire
 {
@@ -54,8 +55,8 @@ namespace Sapphire
 		void Clear();
 
 	private:
-		std::vector<VkDescriptorBufferInfo> m_BufferInfos{};
-		std::vector<VkDescriptorImageInfo> m_ImageInfos{};
+		std::deque<VkDescriptorBufferInfo> m_BufferInfos{};
+		std::deque<VkDescriptorImageInfo> m_ImageInfos{};
 		std::vector<VkWriteDescriptorSet> m_Writes{};
 	};
 }

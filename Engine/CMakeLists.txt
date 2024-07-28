@@ -87,6 +87,8 @@ add_library(Engine
         Source/Sapphire/Scene/Camera.h
         Source/Sapphire/Scene/Scene.h
         Source/Sapphire/Scene/Scene.cpp
+        Source/Sapphire/Scene/Transform.h
+        Source/Sapphire/Scene/Transform.cpp
 )
 
 target_include_directories(Engine
